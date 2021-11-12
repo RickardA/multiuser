@@ -14,9 +14,9 @@ var (
 type Zone struct {
 	ID            uuid.UUID            `json:"id"`
 	Identity      string               `json:"identity"`
-	Contamination *entity.IntegerField `json:"contamination"`
-	Depth         *entity.IntegerField `json:"depth"`
-	Coverage      *entity.IntegerField `json:"coverage"`
+	Contamination *entity.IntegerField `diff:"contamination"`
+	Depth         *entity.IntegerField `diff:"depth"`
+	Coverage      *entity.IntegerField `diff:"coverage"`
 }
 
 type ZoneComparisionObj struct {

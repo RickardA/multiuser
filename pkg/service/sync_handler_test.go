@@ -70,9 +70,14 @@ func TestSyncHandler_GetConflictingFields(t *testing.T) {
 	}
 
 	remoteRunway, err := aggregate.CreateRunway("10-23")
+	remoteRunway.Depth["A"] = 3
+	remoteRunway.LooseSand = true
 	if err != nil {
 		t.Error(err)
 	}
+
+	remoteRunway.LatestVersion = 2
+
 	err = repo.Add(remoteRunway)
 	if err != nil {
 		t.Error(err)

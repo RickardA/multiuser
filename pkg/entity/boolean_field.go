@@ -4,9 +4,9 @@ import "github.com/google/uuid"
 
 type BooleanField struct {
 	ID       uuid.UUID `json:"id"`
-	Value    bool      `json:"value"`
+	Value    bool      `diff:"value"`
 	EditedBy string    `json:"editedBy"`
-	Version  int       `json:"version"`
+	Version  int       `diff:"version"`
 }
 
 type BooleanFieldComparisionObj struct {

@@ -11,10 +11,14 @@ var (
 )
 
 type Runway struct {
-	ID            uuid.UUID        `json:"id"`
-	Designator    string           `json:"designator"`
-	Zones         map[string]*Zone `json:"zones"`
-	LatestVersion int              `json:"latestVersion"`
+	ID            uuid.UUID
+	Designator    string
+	Contamination map[string]int
+	Coverage      map[string]int
+	Depth         map[string]int
+	LooseSand     bool
+	LatestVersion int
+	MetaData      struct{}
 }
 
 type RunwayComparisionObj struct {
@@ -41,8 +45,10 @@ func CreateRunway(designator string) (Runway, error) {
 
 	return Runway{
 		ID:            uuid.New(),
-		Designator:    designator,
-		Zones:         zones,
+		Contamination: map[string]int{"A": 0, "B": 0, "C": 0},
+		Coverage:      map[string]int{"A": 0, "B": 0, "C": 0},
+		Depth:         map[string]int{"A": 0, "B": 0, "C": 0},
+		LooseSand:     false,
 		LatestVersion: 0,
 	}, nil
 }

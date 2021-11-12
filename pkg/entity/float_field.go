@@ -4,9 +4,9 @@ import "github.com/google/uuid"
 
 type FloatField struct {
 	ID       uuid.UUID `json:"id"`
-	Value    float64   `json:"value"`
+	Value    float64   `diff:"value"`
 	EditedBy string    `json:"editedBy"`
-	Version  int       `json:"version"`
+	Version  int       `diff:"version"`
 }
 
 type FloatFieldComparisionObj struct {

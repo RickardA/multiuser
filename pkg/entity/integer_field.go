@@ -4,9 +4,9 @@ import "github.com/google/uuid"
 
 type IntegerField struct {
 	ID       uuid.UUID `json:"id"`
-	Value    int       `json:"value"`
+	Value    int       `diff:"value"`
 	EditedBy string    `json:"editedBy"`
-	Version  int       `json:"version"`
+	Version  int       `diff:"version"`
 }
 
 type IntegerFieldComparisionObj struct {

@@ -52,8 +52,8 @@ func TestRunway_CreateRunway(t *testing.T) {
 			t.Fatalf("Could not create runway and check zones")
 		}
 
-		if len(rwy.Zones) != 3 {
-			t.Errorf("Expected to find 3 zones, found %v", len(rwy.Zones))
+		if len(rwy.Contamination) != 3 {
+			t.Errorf("Expected to find 3 zones, found %v", len(rwy.Contamination))
 		}
 	})
 }

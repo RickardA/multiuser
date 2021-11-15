@@ -45,7 +45,8 @@ func CreateRunway(designator string) (Runway, error) {
 
 	return Runway{
 		ID:            uuid.New(),
-		Contamination: map[string]int{"A": 0, "B": 0, "C": 0},
+		Designator:    designator,
+		Contamination: map[string]int{"A": 0, "B": 1, "C": 0},
 		Coverage:      map[string]int{"A": 0, "B": 0, "C": 0},
 		Depth:         map[string]int{"A": 0, "B": 0, "C": 0},
 		LooseSand:     false,

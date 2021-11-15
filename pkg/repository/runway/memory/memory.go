@@ -1,5 +1,5 @@
 // Package memory is a in memory implementation of the ProductRepository interface.
-package memory
+package memory_runway
 
 import (
 	"sync"

@@ -1,17 +1,19 @@
 package service
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/RickardA/multiuser/pkg/aggregate"
-
-	"github.com/RickardA/multiuser/pkg/repository/runway/memory"
+	memory_conflictObj "github.com/RickardA/multiuser/pkg/repository/conflict_obj/memory"
+	memory_runway "github.com/RickardA/multiuser/pkg/repository/runway/memory"
 )
 
 func TestSyncHandler_CheckVersionMismatch(t *testing.T) {
-	repo := memory.New()
+	repo := memory_runway.New()
+	conflictRepo := memory_conflictObj.New()
 
-	syncHandler, err := New(repo)
+	syncHandler, err := New(repo, conflictRepo)
 	if err != nil {
 		t.Error(err)
 	}
@@ -57,9 +59,10 @@ func TestSyncHandler_CheckVersionMismatch(t *testing.T) {
 }
 
 func TestSyncHandler_GetConflictingFields(t *testing.T) {
-	repo := memory.New()
+	repo := memory_runway.New()
+	conflictRepo := memory_conflictObj.New()
 
-	syncHandler, err := New(repo)
+	syncHandler, err := New(repo, conflictRepo)
 	if err != nil {
 		t.Error(err)
 	}
@@ -70,12 +73,12 @@ func TestSyncHandler_GetConflictingFields(t *testing.T) {
 	}
 
 	remoteRunway, err := aggregate.CreateRunway("10-23")
-	remoteRunway.Depth["A"] = 3
-	remoteRunway.LooseSand = true
 	if err != nil {
 		t.Error(err)
 	}
 
+	remoteRunway.Depth["A"] = 3
+	remoteRunway.LooseSand = true
 	remoteRunway.LatestVersion = 2
 
 	err = repo.Add(remoteRunway)
@@ -83,8 +86,48 @@ func TestSyncHandler_GetConflictingFields(t *testing.T) {
 		t.Error(err)
 	}
 
-	syncHandler.GetConflictingFields(localRunway)
+	conflicts := syncHandler.GetConflictingFields(localRunway)
+
+	fmt.Printf("Conflicting fields: %v\n", conflicts)
+}
+
+func TestSyncHandler_ApplyChanges(t *testing.T) {
+	repo := memory_runway.New()
+	conflictRepo := memory_conflictObj.New()
+
+	syncHandler, err := New(repo, conflictRepo)
 	if err != nil {
 		t.Error(err)
 	}
+
+	localRunway, err := aggregate.CreateRunway("10-23")
+	if err != nil {
+		t.Error(err)
+	}
+
+	remoteRunway, err := aggregate.CreateRunway("10-23")
+	if err != nil {
+		t.Error(err)
+	}
+
+	remoteRunway.Depth["A"] = 3
+	remoteRunway.LooseSand = true
+	remoteRunway.LatestVersion = 2
+
+	fmt.Printf("Runway designator: %v\n", remoteRunway.Designator)
+	err = repo.Add(remoteRunway)
+	if err != nil {
+		t.Error(err)
+	}
+
+	conflicts := syncHandler.GetConflictingFields(localRunway)
+
+	err = conflictRepo.Add(conflicts)
+	if err != nil {
+		t.Error(err)
+	}
+
+	syncHandler.applyChanges(conflicts.ID, "LOCAL")
+
+	fmt.Printf("Conflicting fields: %v\n", conflicts)
 }

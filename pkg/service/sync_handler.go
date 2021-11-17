@@ -121,16 +121,20 @@ func (s SyncHandler) applyChanges(conflictID uuid.UUID, strategy string) {
 		elems := reflect.ValueOf(&remoteRunway).Elem()
 		//typesOfRemoteRunway := elems.Type()
 		for key, val := range conflictObj.Local {
-			fmt.Printf("This is key %v\n", key)
-			fmt.Printf("This is val %v\n", val)
 			f := elems.FieldByName(key)
 
 			if f.IsValid() && f.CanSet() {
 				if isLoopable(f.Interface()) {
 					switch f.Kind() {
 					case reflect.Map:
-						for key, val := range f.Interface.(map[string]interface{}) {
-
+						if f.Type().String() == "map[string]int" {
+							remoteMap := f.Interface().(map[string]int)
+							conflictObjIter := reflect.ValueOf(val).MapRange()
+							for conflictObjIter.Next() {
+								if conflictObjIter.Key().Kind() == reflect.String {
+									remoteMap[conflictObjIter.Key().String()] = conflictObjIter.Value().Interface().(int)
+								}
+							}
 						}
 					default:
 						fmt.Printf("Value is loopable but not ready to be handled\n")
@@ -148,20 +152,6 @@ func (s SyncHandler) applyChanges(conflictID uuid.UUID, strategy string) {
 					fmt.Printf("Cannot set val of type %v\n", f.Kind())
 				}
 			}
-
-			/*for i := 0; i < elems.NumField(); i++ {
-				// f := elems.Field(i)
-				if typesOfRemoteRunway.Field(i).Name == key {
-					fmt.Printf("Match on field %v with field %v \n", key, typesOfRemoteRunway.Field(i).Name)
-					if isLoopable(elems.Field(i).Interface()) {
-						fmt.Println("Value is loopable")
-					} else {
-						fmt.Println("Value is NOT loopable")
-						f.s
-					}
-
-				}
-			}*/
 		}
 
 		//s.db.Update(remoteRunway)
@@ -175,7 +165,6 @@ func (s SyncHandler) applyChanges(conflictID uuid.UUID, strategy string) {
 	}
 
 	fmt.Printf("DB runway: %v\n", remoteRunway)
-	fmt.Printf("DB Conflcit: %v\n", conflictObj)
 }
 
 func compareMapChanges(local map[string]int, remote map[string]int) []string {

@@ -118,53 +118,54 @@ func (s SyncHandler) applyChanges(conflictID uuid.UUID, strategy string) {
 
 	switch strategy {
 	case "LOCAL":
-		elems := reflect.ValueOf(&remoteRunway).Elem()
-		//typesOfRemoteRunway := elems.Type()
-		for key, val := range conflictObj.Local {
-			f := elems.FieldByName(key)
-
-			if f.IsValid() && f.CanSet() {
-				if isLoopable(f.Interface()) {
-					switch f.Kind() {
-					case reflect.Map:
-						if f.Type().String() == "map[string]int" {
-							remoteMap := f.Interface().(map[string]int)
-							conflictObjIter := reflect.ValueOf(val).MapRange()
-							for conflictObjIter.Next() {
-								if conflictObjIter.Key().Kind() == reflect.String {
-									remoteMap[conflictObjIter.Key().String()] = conflictObjIter.Value().Interface().(int)
-								}
-							}
-						}
-					default:
-						fmt.Printf("Value is loopable but not ready to be handled\n")
-					}
-					fmt.Printf("Value is loopable, kind: %v\n", f.Kind())
-					continue
-				}
-
-				switch f.Kind() {
-				case reflect.Int:
-					f.Set(reflect.ValueOf(val.(int)))
-				case reflect.Bool:
-					f.SetBool(val.(bool))
-				default:
-					fmt.Printf("Cannot set val of type %v\n", f.Kind())
-				}
-			}
-		}
-
-		//s.db.Update(remoteRunway)
-
+		applyObjChanges(remoteRunway, conflictObj.Local)
 		fmt.Printf("Remote runway after %v\n", remoteRunway)
-
 	case "REMOTE":
+		applyObjChanges(remoteRunway, conflictObj.Remote)
+		fmt.Printf("Remote runway after %v\n", remoteRunway)
 	default:
 		fmt.Println("Impossible strategy")
 		os.Exit(1)
 	}
 
 	fmt.Printf("DB runway: %v\n", remoteRunway)
+}
+
+func applyObjChanges(rwy aggregate.Runway, conflictObj map[string]interface{}) {
+	remoteRWYElems := reflect.ValueOf(&rwy).Elem()
+	for conflictObjKey, conflictObjVal := range conflictObj {
+		remoteRWYField := remoteRWYElems.FieldByName(conflictObjKey)
+
+		if remoteRWYField.IsValid() && remoteRWYField.CanSet() {
+			if isLoopable(remoteRWYField.Interface()) {
+				switch remoteRWYField.Kind() {
+				case reflect.Map:
+					if remoteRWYField.Type().String() == "map[string]int" {
+						remoteMap := remoteRWYField.Interface().(map[string]int)
+						conflictObjIter := reflect.ValueOf(conflictObjVal).MapRange()
+						for conflictObjIter.Next() {
+							if conflictObjIter.Key().Kind() == reflect.String {
+								remoteMap[conflictObjIter.Key().String()] = conflictObjIter.Value().Interface().(int)
+							}
+						}
+					}
+				default:
+					fmt.Printf("Value is loopable but not ready to be handled\n")
+				}
+				fmt.Printf("Value is loopable, kind: %v\n", remoteRWYField.Kind())
+				continue
+			}
+
+			switch remoteRWYField.Kind() {
+			case reflect.Int:
+				remoteRWYField.Set(reflect.ValueOf(conflictObjVal.(int)))
+			case reflect.Bool:
+				remoteRWYField.SetBool(conflictObjVal.(bool))
+			default:
+				fmt.Printf("Cannot set val of type %v\n", remoteRWYField.Kind())
+			}
+		}
+	}
 }
 
 func compareMapChanges(local map[string]int, remote map[string]int) []string {

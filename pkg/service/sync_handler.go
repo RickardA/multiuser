@@ -1,9 +1,12 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
+	"strings"
 
 	conflictObj "github.com/RickardA/multiuser/pkg/repository/conflict_obj"
 
@@ -67,8 +70,8 @@ func (s SyncHandler) GetConflictingFields(localRunway aggregate.Runway) aggregat
 		switch f.Type().String() {
 		case "bool", "string", "int":
 			if compareSingleValue(f.Interface(), remoteRunwayElems.Field(i).Interface()) {
-				diff["LOCAL"][typeOfT.Field(i).Name] = f.Interface()
-				diff["REMOTE"][typeOfRemoteElem.Field(i).Name] = remoteRunwayElems.Field(i).Interface()
+				diff["LOCAL"][getJSONTag(string(typeOfRemoteElem.Field(i).Tag), typeOfRemoteElem.Field(i).Name)] = f.Interface()
+				diff["REMOTE"][getJSONTag(string(typeOfRemoteElem.Field(i).Tag), typeOfRemoteElem.Field(i).Name)] = remoteRunwayElems.Field(i).Interface()
 			}
 		case "map[string]int":
 			diffingFields := compareMapChanges(f.Interface().(map[string]int), remoteRunwayElems.Field(i).Interface().(map[string]int))
@@ -82,8 +85,8 @@ func (s SyncHandler) GetConflictingFields(localRunway aggregate.Runway) aggregat
 					localDiffs[field] = localMap[field]
 					remoteDiffs[field] = remoteMap[field]
 				}
-				diff["LOCAL"][typeOfT.Field(i).Name] = localDiffs
-				diff["REMOTE"][typeOfT.Field(i).Name] = remoteDiffs
+				diff["LOCAL"][getJSONTag(string(typeOfT.Field(i).Tag), typeOfT.Field(i).Name)] = localDiffs
+				diff["REMOTE"][getJSONTag(string(typeOfT.Field(i).Tag), typeOfT.Field(i).Name)] = remoteDiffs
 			}
 		default:
 			fmt.Printf("Type not recognized %v\n", f.Type().String())
@@ -96,6 +99,36 @@ func (s SyncHandler) GetConflictingFields(localRunway aggregate.Runway) aggregat
 		Local:            diff["LOCAL"],
 		ResolutionMethod: "LOCAL",
 	}
+}
+
+func getJSONTag(tag string, key string) string {
+	fmt.Printf("Tag %v\n", tag)
+
+	if tag == "" {
+		return key
+	}
+
+	jsonFullTagNameRegex := regexp.MustCompile("json:\".*?\"")
+	jsonTagNameRegex := regexp.MustCompile("\".*?\"")
+
+	match := jsonFullTagNameRegex.FindString(tag)
+
+	fmt.Printf("Full match %v\n", match)
+
+	if match == "" {
+		return key
+	}
+
+	tagNameMatch := jsonTagNameRegex.FindStringSubmatch(match)
+
+	if tagNameMatch == nil {
+		return key
+	}
+
+	fmt.Printf("Return tag %v\n", tagNameMatch[0])
+	returnString := strings.ReplaceAll(tagNameMatch[0], "\"", "")
+
+	return returnString
 }
 
 func (s SyncHandler) applyChanges(conflictID uuid.UUID, strategy string) {
@@ -131,8 +164,64 @@ func (s SyncHandler) applyChanges(conflictID uuid.UUID, strategy string) {
 	fmt.Printf("DB runway: %v\n", remoteRunway)
 }
 
+func convertToMapInterface(rwy aggregate.Runway) (returnMap map[string]interface{}, err error) {
+	asJSON, err := json.Marshal(rwy)
+
+	if err != nil {
+		return returnMap, err
+	}
+
+	err = json.Unmarshal(asJSON, &returnMap)
+
+	if err != nil {
+		return returnMap, err
+	}
+
+	return returnMap, nil
+}
+
 func applyObjChanges(rwy aggregate.Runway, conflictObj map[string]interface{}) {
-	remoteRWYElems := reflect.ValueOf(&rwy).Elem()
+	rwyMap, err := convertToMapInterface(rwy)
+
+	if err != nil {
+		panic("Something went wrong!!!")
+	}
+
+	fmt.Printf("This is rwy map: %v\n", rwyMap)
+
+	for conflictObjKey, conflictObjVal := range conflictObj {
+		if _, keyExists := rwyMap[conflictObjKey]; !keyExists {
+			fmt.Printf("Key does not exist: %v\n", conflictObjKey)
+			continue
+		}
+
+		if isLoopable(conflictObjVal) {
+			switch reflect.ValueOf(conflictObjVal).Kind() {
+			case reflect.Map:
+				fmt.Println("Value is a map")
+				for _, key := range reflect.ValueOf(conflictObjVal).MapKeys() {
+					strct := reflect.ValueOf(conflictObjVal).MapIndex(key)
+					rwyMap[conflictObjKey].(map[string]interface{})[key.String()] = strct.Interface()
+				}
+			default:
+				fmt.Printf("Value is loopable but not ready to be handled\n")
+			}
+			continue
+		}
+
+		switch reflect.ValueOf(conflictObjVal).Kind() {
+		case reflect.Int, reflect.Float64, reflect.Bool:
+			rwyMap[conflictObjKey] = conflictObjVal
+		default:
+			fmt.Printf("Cannot set val of type %v\n", reflect.ValueOf(conflictObjVal).Kind())
+		}
+
+	}
+	fmt.Printf("This i rwy map after %v\n", rwyMap)
+}
+
+/*
+remoteRWYElems := reflect.ValueOf(&rwy).Elem()
 	for conflictObjKey, conflictObjVal := range conflictObj {
 		remoteRWYField := remoteRWYElems.FieldByName(conflictObjKey)
 
@@ -165,8 +254,7 @@ func applyObjChanges(rwy aggregate.Runway, conflictObj map[string]interface{}) {
 				fmt.Printf("Cannot set val of type %v\n", remoteRWYField.Kind())
 			}
 		}
-	}
-}
+	}*/
 
 func compareMapChanges(local map[string]int, remote map[string]int) []string {
 	returnVal := []string{}

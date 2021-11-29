@@ -126,8 +126,8 @@ func TestSyncHandler_ApplyChanges(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	fmt.Printf("Conflicting fields: %v\n", conflicts)
 
 	syncHandler.applyChanges(conflicts.ID, "LOCAL")
 
-	fmt.Printf("Conflicting fields: %v\n", conflicts)
 }

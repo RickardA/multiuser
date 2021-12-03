@@ -1,37 +1,35 @@
-// Package memory is a in memory implementation of the ProductRepository interface.
-package memory_conflictObj
+package memory_conflict_repository
 
 import (
 	"sync"
 
-	conflictObj "github.com/RickardA/multiuser/pkg/repository/conflict_obj"
-
-	"github.com/RickardA/multiuser/pkg/aggregate"
+	"github.com/RickardA/multiuser/internal/pkg/domain"
+	conflict_repository "github.com/RickardA/multiuser/internal/pkg/repository/conflict"
 	"github.com/google/uuid"
 )
 
 type MemoryConflictObjRepository struct {
-	conflicts map[uuid.UUID]aggregate.ConflictObj
+	conflicts map[uuid.UUID]domain.ConflictObj
 	sync.Mutex
 }
 
 // New is a factory function to generate a new repository of customers
 func New() *MemoryConflictObjRepository {
 	return &MemoryConflictObjRepository{
-		conflicts: make(map[uuid.UUID]aggregate.ConflictObj),
+		conflicts: make(map[uuid.UUID]domain.ConflictObj),
 	}
 }
 
 // GetByID searches for a product based on it's ID
-func (mpr *MemoryConflictObjRepository) GetByID(id uuid.UUID) (aggregate.ConflictObj, error) {
+func (mpr *MemoryConflictObjRepository) GetByID(id uuid.UUID) (domain.ConflictObj, error) {
 	if conflict, ok := mpr.conflicts[id]; ok {
 		return conflict, nil
 	}
-	return aggregate.ConflictObj{}, conflictObj.ErrConflictNotFound
+	return domain.ConflictObj{}, conflict_repository.ErrConflictNotFound
 }
 
 // Add will add a new product to the repository
-func (mpr *MemoryConflictObjRepository) Add(newConflict aggregate.ConflictObj) error {
+func (mpr *MemoryConflictObjRepository) Add(newConflict domain.ConflictObj) error {
 	mpr.Lock()
 	defer mpr.Unlock()
 

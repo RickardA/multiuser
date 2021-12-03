@@ -1,9 +1,9 @@
-package conflictObj
+package conflict_repository
 
 import (
 	"errors"
 
-	"github.com/RickardA/multiuser/pkg/aggregate"
+	"github.com/RickardA/multiuser/internal/pkg/domain"
 	"github.com/google/uuid"
 )
 
@@ -12,7 +12,7 @@ var (
 )
 
 type ConflictObjRepository interface {
-	GetByID(id uuid.UUID) (aggregate.ConflictObj, error)
-	Add(conflictObj aggregate.ConflictObj) error
+	GetByID(id uuid.UUID) (domain.ConflictObj, error)
+	Add(conflictObj domain.ConflictObj) error
 	Delete(id uuid.UUID) error
 }

@@ -1,17 +1,17 @@
-package entity
+package domain
 
 import "github.com/google/uuid"
 
-type FloatField struct {
+type IntegerField struct {
 	ID       uuid.UUID `json:"id"`
-	Value    float64   `diff:"value"`
+	Value    int       `diff:"value"`
 	EditedBy string    `json:"editedBy"`
 	Version  int       `diff:"version"`
 }
 
-type FloatFieldComparisionObj struct {
+type IntegerFieldComparisionObj struct {
 	ID       uuid.UUID `json:"-"`
-	Value    float64   `json:"value"`
+	Value    int       `json:"value"`
 	EditedBy string    `json:"-"`
 	Version  int       `json:"version"`
 }

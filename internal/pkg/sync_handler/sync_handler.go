@@ -1,4 +1,4 @@
-package service
+package sync_handler
 
 import (
 	"encoding/json"
@@ -8,33 +8,32 @@ import (
 	"regexp"
 	"strings"
 
-	conflictObj "github.com/RickardA/multiuser/pkg/repository/conflict_obj"
+	"github.com/RickardA/multiuser/internal/pkg/domain"
+	conflict_repository "github.com/RickardA/multiuser/internal/pkg/repository/conflict"
+	"github.com/RickardA/multiuser/internal/pkg/repository/runway"
 
 	"github.com/google/uuid"
-
-	"github.com/RickardA/multiuser/pkg/aggregate"
-	"github.com/RickardA/multiuser/pkg/repository/runway"
 )
 
 type SyncHandlerService interface {
-	New(db runway.RunwayRepository, conflictDB conflictObj.ConflictObjRepository) (SyncHandler, error)
-	CheckVersionMismatch(localRunway aggregate.Runway) (bool, error)
-	GetConflictingFields(localRunway aggregate.Runway)
+	New(db runway.RunwayRepository, conflictDB conflict_repository.ConflictObjRepository) (SyncHandler, error)
+	CheckVersionMismatch(localRunway domain.Runway) (bool, error)
+	GetConflictingFields(localRunway domain.Runway)
 }
 
 type SyncHandler struct {
 	db         runway.RunwayRepository
-	conflictDB conflictObj.ConflictObjRepository
+	conflictDB conflict_repository.ConflictObjRepository
 }
 
-func New(db runway.RunwayRepository, conflictDB conflictObj.ConflictObjRepository) (SyncHandler, error) {
+func New(db runway.RunwayRepository, conflictDB conflict_repository.ConflictObjRepository) (SyncHandler, error) {
 	return SyncHandler{
 		db:         db,
 		conflictDB: conflictDB,
 	}, nil
 }
 
-func (s SyncHandler) CheckVersionMismatch(localRunway aggregate.Runway) (bool, error) {
+func (s SyncHandler) CheckVersionMismatch(localRunway domain.Runway) (bool, error) {
 	remoteRunway, err := s.db.GetByDesignator(localRunway.Designator)
 
 	if err != nil {
@@ -48,13 +47,7 @@ func (s SyncHandler) CheckVersionMismatch(localRunway aggregate.Runway) (bool, e
 	return true, nil
 }
 
-func (s SyncHandler) GetConflictingFields(localRunway aggregate.Runway) aggregate.ConflictObj {
-	remoteRunway, err := s.db.GetByDesignator(localRunway.Designator)
-
-	if err != nil {
-		os.Exit(1)
-	}
-
+func (s SyncHandler) GetConflictingFields(localRunway domain.Runway, remoteRunway domain.Runway) domain.ConflictObj {
 	localRunwayElems := reflect.ValueOf(&localRunway).Elem()
 	remoteRunwayElems := reflect.ValueOf(&remoteRunway).Elem()
 
@@ -93,7 +86,7 @@ func (s SyncHandler) GetConflictingFields(localRunway aggregate.Runway) aggregat
 		}
 	}
 
-	return aggregate.ConflictObj{
+	return domain.ConflictObj{
 		ID:               uuid.New(),
 		Remote:           diff["REMOTE"],
 		Local:            diff["LOCAL"],
@@ -164,7 +157,7 @@ func (s SyncHandler) applyChanges(conflictID uuid.UUID, strategy string) {
 	fmt.Printf("DB runway: %v\n", remoteRunway)
 }
 
-func convertToMapInterface(rwy aggregate.Runway) (returnMap map[string]interface{}, err error) {
+func convertToMapInterface(rwy domain.Runway) (returnMap map[string]interface{}, err error) {
 	asJSON, err := json.Marshal(rwy)
 
 	if err != nil {
@@ -180,7 +173,7 @@ func convertToMapInterface(rwy aggregate.Runway) (returnMap map[string]interface
 	return returnMap, nil
 }
 
-func applyObjChanges(rwy aggregate.Runway, conflictObj map[string]interface{}) {
+func applyObjChanges(rwy domain.Runway, conflictObj map[string]interface{}) {
 	rwyMap, err := convertToMapInterface(rwy)
 
 	if err != nil {
@@ -219,42 +212,6 @@ func applyObjChanges(rwy aggregate.Runway, conflictObj map[string]interface{}) {
 	}
 	fmt.Printf("This i rwy map after %v\n", rwyMap)
 }
-
-/*
-remoteRWYElems := reflect.ValueOf(&rwy).Elem()
-	for conflictObjKey, conflictObjVal := range conflictObj {
-		remoteRWYField := remoteRWYElems.FieldByName(conflictObjKey)
-
-		if remoteRWYField.IsValid() && remoteRWYField.CanSet() {
-			if isLoopable(remoteRWYField.Interface()) {
-				switch remoteRWYField.Kind() {
-				case reflect.Map:
-					if remoteRWYField.Type().String() == "map[string]int" {
-						remoteMap := remoteRWYField.Interface().(map[string]int)
-						conflictObjIter := reflect.ValueOf(conflictObjVal).MapRange()
-						for conflictObjIter.Next() {
-							if conflictObjIter.Key().Kind() == reflect.String {
-								remoteMap[conflictObjIter.Key().String()] = conflictObjIter.Value().Interface().(int)
-							}
-						}
-					}
-				default:
-					fmt.Printf("Value is loopable but not ready to be handled\n")
-				}
-				fmt.Printf("Value is loopable, kind: %v\n", remoteRWYField.Kind())
-				continue
-			}
-
-			switch remoteRWYField.Kind() {
-			case reflect.Int:
-				remoteRWYField.Set(reflect.ValueOf(conflictObjVal.(int)))
-			case reflect.Bool:
-				remoteRWYField.SetBool(conflictObjVal.(bool))
-			default:
-				fmt.Printf("Cannot set val of type %v\n", remoteRWYField.Kind())
-			}
-		}
-	}*/
 
 func compareMapChanges(local map[string]int, remote map[string]int) []string {
 	returnVal := []string{}

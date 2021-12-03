@@ -1,9 +1,7 @@
-package aggregate_test
+package domain
 
 import (
 	"testing"
-
-	"github.com/RickardA/multiuser/pkg/aggregate"
 )
 
 func TestRunway_CreateRunway(t *testing.T) {
@@ -17,7 +15,7 @@ func TestRunway_CreateRunway(t *testing.T) {
 		{
 			test:          "should return error if designator is empty",
 			designator:    "",
-			expectedError: aggregate.ErrMissingDesignator,
+			expectedError: ErrMissingDesignator,
 		},
 		{
 			test:          "validvalues",
@@ -28,7 +26,7 @@ func TestRunway_CreateRunway(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.test, func(t *testing.T) {
-			_, err := aggregate.CreateRunway(tc.designator)
+			_, err := CreateRunway(tc.designator)
 			if err != tc.expectedError {
 				t.Errorf("Expected error: %v, got: %v", tc.expectedError, err)
 			}
@@ -36,7 +34,7 @@ func TestRunway_CreateRunway(t *testing.T) {
 	}
 
 	t.Run("Version Check", func(t *testing.T) {
-		rwy, err := aggregate.CreateRunway("10-23")
+		rwy, err := CreateRunway("10-23")
 		if err != nil {
 			t.Fatalf("Could not create runway and check version")
 		}
@@ -47,7 +45,7 @@ func TestRunway_CreateRunway(t *testing.T) {
 	})
 
 	t.Run("Zone Check", func(t *testing.T) {
-		rwy, err := aggregate.CreateRunway("10-23")
+		rwy, err := CreateRunway("10-23")
 		if err != nil {
 			t.Fatalf("Could not create runway and check zones")
 		}

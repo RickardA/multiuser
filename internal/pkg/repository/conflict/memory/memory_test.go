@@ -1,16 +1,15 @@
-// Package memory is a in memory implementation of the ProductRepository interface.
-package memory_conflictObj
+package memory_conflict_repository
 
 import (
 	"testing"
 
-	"github.com/RickardA/multiuser/pkg/aggregate"
-	conflictObj "github.com/RickardA/multiuser/pkg/repository/conflict_obj"
+	"github.com/RickardA/multiuser/internal/pkg/domain"
+	conflict_repository "github.com/RickardA/multiuser/internal/pkg/repository/conflict"
 	"github.com/google/uuid"
 )
 
-func createConflictExample() aggregate.ConflictObj {
-	return aggregate.ConflictObj{
+func createConflictExample() domain.ConflictObj {
+	return domain.ConflictObj{
 		ID: uuid.New(),
 		Remote: map[string]interface{}{
 			"LatestVersion": 0,
@@ -60,7 +59,7 @@ func TestMemoryProductRepository_Get(t *testing.T) {
 		}, {
 			name:        "Get non-existing conflict by ID",
 			id:          uuid.New(),
-			expectedErr: conflictObj.ErrConflictNotFound,
+			expectedErr: conflict_repository.ErrConflictNotFound,
 		},
 	}
 
@@ -95,7 +94,7 @@ func TestMemoryRunwayRepository_Delete(t *testing.T) {
 		{
 			name:        "Get deleted conflict by ID",
 			id:          conflict.ID,
-			expectedErr: conflictObj.ErrConflictNotFound,
+			expectedErr: conflict_repository.ErrConflictNotFound,
 		},
 	}
 

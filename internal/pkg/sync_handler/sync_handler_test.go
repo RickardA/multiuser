@@ -1,29 +1,29 @@
-package service
+package sync_handler
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/RickardA/multiuser/pkg/aggregate"
-	memory_conflictObj "github.com/RickardA/multiuser/pkg/repository/conflict_obj/memory"
-	memory_runway "github.com/RickardA/multiuser/pkg/repository/runway/memory"
+	"github.com/RickardA/multiuser/internal/pkg/domain"
+	memory_conflict_repository "github.com/RickardA/multiuser/internal/pkg/repository/conflict/memory"
+	memory_runway "github.com/RickardA/multiuser/internal/pkg/repository/runway/memory"
 )
 
 func TestSyncHandler_CheckVersionMismatch(t *testing.T) {
 	repo := memory_runway.New()
-	conflictRepo := memory_conflictObj.New()
+	conflictRepo := memory_conflict_repository.New()
 
 	syncHandler, err := New(repo, conflictRepo)
 	if err != nil {
 		t.Error(err)
 	}
 
-	localRunway, err := aggregate.CreateRunway("10-23")
+	localRunway, err := domain.CreateRunway("10-23")
 	if err != nil {
 		t.Error(err)
 	}
 
-	remoteRunway, err := aggregate.CreateRunway("10-23")
+	remoteRunway, err := domain.CreateRunway("10-23")
 	if err != nil {
 		t.Error(err)
 	}
@@ -60,19 +60,19 @@ func TestSyncHandler_CheckVersionMismatch(t *testing.T) {
 
 func TestSyncHandler_GetConflictingFields(t *testing.T) {
 	repo := memory_runway.New()
-	conflictRepo := memory_conflictObj.New()
+	conflictRepo := memory_conflict_repository.New()
 
 	syncHandler, err := New(repo, conflictRepo)
 	if err != nil {
 		t.Error(err)
 	}
 
-	localRunway, err := aggregate.CreateRunway("10-23")
+	localRunway, err := domain.CreateRunway("10-23")
 	if err != nil {
 		t.Error(err)
 	}
 
-	remoteRunway, err := aggregate.CreateRunway("10-23")
+	remoteRunway, err := domain.CreateRunway("10-23")
 	if err != nil {
 		t.Error(err)
 	}
@@ -86,26 +86,32 @@ func TestSyncHandler_GetConflictingFields(t *testing.T) {
 		t.Error(err)
 	}
 
-	conflicts := syncHandler.GetConflictingFields(localRunway)
+	remoteRunway, err = repo.GetByDesignator(localRunway.Designator)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	conflicts := syncHandler.GetConflictingFields(localRunway, remoteRunway)
 
 	fmt.Printf("Conflicting fields: %v\n", conflicts)
 }
 
 func TestSyncHandler_ApplyChanges(t *testing.T) {
 	repo := memory_runway.New()
-	conflictRepo := memory_conflictObj.New()
+	conflictRepo := memory_conflict_repository.New()
 
 	syncHandler, err := New(repo, conflictRepo)
 	if err != nil {
 		t.Error(err)
 	}
 
-	localRunway, err := aggregate.CreateRunway("10-23")
+	localRunway, err := domain.CreateRunway("10-23")
 	if err != nil {
 		t.Error(err)
 	}
 
-	remoteRunway, err := aggregate.CreateRunway("10-23")
+	remoteRunway, err := domain.CreateRunway("10-23")
 	if err != nil {
 		t.Error(err)
 	}
@@ -120,7 +126,13 @@ func TestSyncHandler_ApplyChanges(t *testing.T) {
 		t.Error(err)
 	}
 
-	conflicts := syncHandler.GetConflictingFields(localRunway)
+	remoteRunway, err = repo.GetByDesignator(localRunway.Designator)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	conflicts := syncHandler.GetConflictingFields(localRunway, remoteRunway)
 
 	err = conflictRepo.Add(conflicts)
 	if err != nil {

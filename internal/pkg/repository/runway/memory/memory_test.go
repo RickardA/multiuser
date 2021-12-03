@@ -3,14 +3,13 @@ package memory_runway
 import (
 	"testing"
 
-	"github.com/RickardA/multiuser/pkg/repository/runway"
-
-	"github.com/RickardA/multiuser/pkg/aggregate"
+	"github.com/RickardA/multiuser/internal/pkg/domain"
+	"github.com/RickardA/multiuser/internal/pkg/repository/runway"
 )
 
 func TestMemoryRunwayRepository_Add(t *testing.T) {
 	repo := New()
-	runway, err := aggregate.CreateRunway("10-23")
+	runway, err := domain.CreateRunway("10-23")
 	if err != nil {
 		t.Error(err)
 	}
@@ -23,7 +22,7 @@ func TestMemoryRunwayRepository_Add(t *testing.T) {
 
 func TestMemoryProductRepository_Get(t *testing.T) {
 	repo := New()
-	existingRunway, err := aggregate.CreateRunway("10-23")
+	existingRunway, err := domain.CreateRunway("10-23")
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,7 +63,7 @@ func TestMemoryProductRepository_Get(t *testing.T) {
 }
 func TestMemoryRunwayRepository_Update(t *testing.T) {
 	repo := New()
-	existingRunway, err := aggregate.CreateRunway("10-23")
+	existingRunway, err := domain.CreateRunway("10-23")
 	if err != nil {
 		t.Error(err)
 	}

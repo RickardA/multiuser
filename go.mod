@@ -4,5 +4,6 @@ go 1.12
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/r3labs/diff v1.1.0
+	google.golang.org/grpc v1.42.0
+	google.golang.org/protobuf v1.27.1
 )

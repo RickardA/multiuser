@@ -3,7 +3,8 @@ module github.com/RickardA/multiuser
 go 1.12
 
 require (
+	github.com/99designs/gqlgen v0.14.0
 	github.com/google/uuid v1.3.0
-	google.golang.org/grpc v1.42.0
-	google.golang.org/protobuf v1.27.1
+	github.com/stretchr/testify v1.7.0 // indirect
+	github.com/vektah/gqlparser/v2 v2.2.0
 )

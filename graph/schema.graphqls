@@ -1,0 +1,30 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type GQRunway {
+  id: ID!
+  designator: String!
+  contamination: [GQTuple]
+  coverage: [GQTuple]
+  depth: [GQTuple]
+  looseSand: Boolean
+  latestVersion: Int
+}
+
+type GQTuple {
+  key: String!
+  value: Int!
+}
+
+type Query {
+  getRunwayByDesignator(designator: String!): GQRunway
+}
+
+input NewRunway {
+  designator: String!
+}
+
+type Mutation {
+  createRunway(input: NewRunway!): GQRunway!
+}

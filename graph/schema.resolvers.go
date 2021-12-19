@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/RickardA/multiuser/graph/generated"
 	"github.com/RickardA/multiuser/graph/model"
@@ -21,13 +20,26 @@ func (r *mutationResolver) CreateRunway(ctx context.Context, input model.NewRunw
 		return nil, err
 	}
 
+	err = r.RunwayDB.Add(newRunway)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return into.Runway(newRunway), nil
 
 	// panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error) {
-	panic(fmt.Errorf("not implemented"))
+	runway, err := r.RunwayDB.GetByDesignator(designator)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return into.Runway(runway), nil
+	// panic(fmt.Errorf("not implemented"))
 }
 
 // Mutation returns generated.MutationResolver implementation.

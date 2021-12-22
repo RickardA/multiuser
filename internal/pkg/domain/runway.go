@@ -3,15 +3,17 @@ package domain
 import (
 	"errors"
 
-	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
 	ErrMissingDesignator = errors.New("Missing runway designator")
 )
 
+type RunwayID primitive.ObjectID
+
 type Runway struct {
-	ID            uuid.UUID
+	ID            primitive.ObjectID `bson:"_id"`
 	Designator    string
 	Contamination map[string]int `json:"contamination"`
 	Coverage      map[string]int `json:"coverage"`
@@ -37,7 +39,7 @@ func CreateRunway(designator string) (Runway, error) {
 	}
 
 	return Runway{
-		ID:            uuid.New(),
+		ID:            primitive.NewObjectID(),
 		Designator:    designator,
 		Contamination: map[string]int{"A": 0, "B": 0, "C": 0},
 		Coverage:      map[string]int{"A": 0, "B": 0, "C": 0},

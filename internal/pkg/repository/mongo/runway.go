@@ -12,10 +12,10 @@ import (
 
 var _ repository.RunwayRepository = &Client{}
 
-var CollectionName = "runways"
+var RunwayCollectionName = "runways"
 
 func (c *Client) GetRunwayByDesignator(designator string) (domain.Runway, error) {
-	coll := c.db.Database("db").Collection(CollectionName)
+	coll := c.db.Database("db").Collection(RunwayCollectionName)
 
 	result := coll.FindOne(c.ctx, bson.M{"designator": designator})
 
@@ -36,7 +36,7 @@ func (c *Client) GetRunwayByDesignator(designator string) (domain.Runway, error)
 }
 
 func (c *Client) GetRunwayByID(id domain.RunwayID) (domain.Runway, error) {
-	coll := c.db.Database("db").Collection(CollectionName)
+	coll := c.db.Database("db").Collection(RunwayCollectionName)
 
 	convID, err := intomongo.RunwayID(id)
 
@@ -74,7 +74,7 @@ func (c *Client) CreateRunway(input domain.Runway) (domain.RunwayID, error) {
 		return "", err
 	}
 
-	coll := c.db.Database("db").Collection(CollectionName)
+	coll := c.db.Database("db").Collection(RunwayCollectionName)
 
 	result, err := coll.InsertOne(c.ctx, obj)
 
@@ -94,7 +94,7 @@ func (c *Client) CreateRunway(input domain.Runway) (domain.RunwayID, error) {
 }
 
 func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.Runway, error) {
-	coll := c.db.Database("db").Collection(CollectionName)
+	coll := c.db.Database("db").Collection(RunwayCollectionName)
 
 	convID, err := intomongo.RunwayID(id)
 
@@ -135,7 +135,7 @@ func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.R
 }
 
 func (c *Client) DeleteRunwayWithID(id domain.RunwayID) error {
-	coll := c.db.Database("db").Collection(CollectionName)
+	coll := c.db.Database("db").Collection(RunwayCollectionName)
 
 	convID, err := intomongo.RunwayID(id)
 

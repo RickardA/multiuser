@@ -24,8 +24,8 @@ type RunwayRepository interface {
 }
 
 type ConflictRepository interface {
-	GetConflictForRunway(designator string) (domain.ConflictObj, error)
-	CreateConflictObj(input domain.ConflictObj) (domain.ConflictObj, error)
-	UpdateConflictObj(input domain.ConflictObj) (domain.ConflictObj, error)
-	DeleteConflictWithID(id string) error
+	GetConflictForRunway(runwayID domain.RunwayID) (domain.Conflict, error)
+	CreateConflict(input domain.Conflict) (domain.ConflictID, error)
+	UpdateConflict(input domain.Conflict) (domain.Conflict, error)
+	DeleteConflictWithID(id domain.ConflictID) error
 }

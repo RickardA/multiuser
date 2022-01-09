@@ -24,6 +24,7 @@ type RunwayRepository interface {
 }
 
 type ConflictRepository interface {
+	GetConflictByID(id domain.ConflictID) (domain.Conflict, error)
 	GetConflictForRunway(runwayID domain.RunwayID) (domain.Conflict, error)
 	CreateConflict(input domain.Conflict) (domain.ConflictID, error)
 	UpdateConflict(input domain.Conflict) (domain.Conflict, error)

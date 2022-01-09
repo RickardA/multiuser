@@ -43,7 +43,7 @@ func TestClient_CreateConflict(t *testing.T) {
 				return
 			}
 
-			runway, err := c.GetConflictForRunway(tt.args.RunwayID)
+			runway, err := c.GetConflictByID(got)
 
 			tt.want.ID = got
 

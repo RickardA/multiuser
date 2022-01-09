@@ -14,6 +14,33 @@ var _ repository.ConflictRepository = &Client{}
 
 var ConflictCollectionName = "conflicts"
 
+func (c *Client) GetConflictByID(id domain.ConflictID) (domain.Conflict, error) {
+	coll := c.db.Database("db").Collection(ConflictCollectionName)
+
+	convID, err := intomongo.ConflictID(id)
+
+	if err != nil {
+		return domain.Conflict{}, err
+	}
+
+	result := coll.FindOne(c.ctx, bson.M{"_id": convID})
+
+	var res mongo.OutputConflict
+
+	bytes, err := result.DecodeBytes()
+	if err != nil {
+		return domain.Conflict{}, err
+	}
+
+	err = bson.Unmarshal(bytes, &res)
+
+	if err != nil {
+		return domain.Conflict{}, err
+	}
+
+	return frommongo.Conflict(res)
+}
+
 func (c *Client) GetConflictForRunway(runwayID domain.RunwayID) (domain.Conflict, error) {
 	coll := c.db.Database("db").Collection(ConflictCollectionName)
 

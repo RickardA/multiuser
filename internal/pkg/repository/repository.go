@@ -19,8 +19,8 @@ type RunwayRepository interface {
 	GetRunwayByDesignator(designator string) (domain.Runway, error)
 	GetRunwayByID(id domain.RunwayID) (domain.Runway, error)
 	CreateRunway(input domain.Runway) (domain.RunwayID, error)
-	UpdateRunway(input domain.Runway) (domain.Runway, error)
-	DeleteRunwayWithID(id string) error
+	UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.Runway, error)
+	DeleteRunwayWithID(id domain.RunwayID) error
 }
 
 type ConflictRepository interface {

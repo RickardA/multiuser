@@ -59,11 +59,13 @@ func TestClient_CreateRunway(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := NewConnection("mongodb://localhost")
+			c, exitFunc, err := NewMongoTestConnection()
 
 			if err != nil {
 				t.Error("Could not create database connection, err %w", err)
 			}
+
+			defer exitFunc()
 
 			tt.want.ID, err = c.CreateRunway(tt.args)
 			if (err != nil) != tt.wantErr {
@@ -119,11 +121,13 @@ func TestClient_DeleteRunwayWithID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := NewConnection("mongodb://localhost")
+			c, exitFunc, err := NewMongoTestConnection()
 
 			if err != nil {
 				t.Error("Could not create database connection, err %w", err)
 			}
+
+			defer exitFunc()
 
 			deleteID, err := c.CreateRunway(tt.args)
 			if (err != nil) != tt.wantErr {
@@ -190,11 +194,13 @@ func TestClient_UpdateRunway(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := NewConnection("mongodb://localhost")
+			c, exitFunc, err := NewMongoTestConnection()
 
 			if err != nil {
 				t.Error("Could not create database connection, err %w", err)
 			}
+
+			defer exitFunc()
 
 			got, err := c.CreateRunway(tt.input)
 			if (err != nil) != tt.wantErr {
@@ -269,11 +275,13 @@ func TestClient_GetRunwayByDesignator(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := NewConnection("mongodb://localhost")
+			c, exitFunc, err := NewMongoTestConnection()
 
 			if err != nil {
 				t.Error("Could not create database connection, err %w", err)
 			}
+
+			defer exitFunc()
 
 			_, err = c.CreateRunway(tt.args)
 			if (err != nil) != tt.wantErr {

@@ -13,7 +13,7 @@ var (
 type RunwayID primitive.ObjectID
 
 type Runway struct {
-	ID            primitive.ObjectID `bson:"_id"`
+	ID            RunwayID `bson:"_id"`
 	Designator    string
 	Contamination map[string]int `json:"contamination"`
 	Coverage      map[string]int `json:"coverage"`
@@ -39,7 +39,7 @@ func CreateRunway(designator string) (Runway, error) {
 	}
 
 	return Runway{
-		ID:            primitive.NewObjectID(),
+		ID:            RunwayID(primitive.NewObjectID()),
 		Designator:    designator,
 		Contamination: map[string]int{"A": 0, "B": 0, "C": 0},
 		Coverage:      map[string]int{"A": 0, "B": 0, "C": 0},

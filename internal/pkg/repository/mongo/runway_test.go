@@ -9,7 +9,7 @@ import (
 )
 
 func TestClient_CreateRunway(t *testing.T) {
-	objID := primitive.NewObjectID()
+	objID := domain.RunwayID(primitive.NewObjectID())
 	tests := []struct {
 		name    string
 		args    domain.Runway
@@ -19,7 +19,7 @@ func TestClient_CreateRunway(t *testing.T) {
 		{
 			name: "Create runway",
 			args: domain.Runway{
-				ID:         objID,
+				ID:         domain.RunwayID(objID),
 				Designator: "12-30",
 				Contamination: map[string]int{
 					"a": 0,
@@ -39,7 +39,7 @@ func TestClient_CreateRunway(t *testing.T) {
 				LatestVersion: 12,
 			},
 			want: domain.Runway{
-				ID:         objID,
+				ID:         domain.RunwayID(objID),
 				Designator: "12-30",
 				Contamination: map[string]int{
 					"a": 0,

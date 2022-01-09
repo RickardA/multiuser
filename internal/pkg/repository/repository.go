@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/RickardA/multiuser/internal/pkg/domain"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
@@ -18,8 +17,8 @@ type Repository interface {
 
 type RunwayRepository interface {
 	GetRunwayByDesignator(designator string) (domain.Runway, error)
-	GetRunwayByID(id primitive.ObjectID) (domain.Runway, error)
-	CreateRunway(input domain.Runway) (primitive.ObjectID, error)
+	GetRunwayByID(id domain.RunwayID) (domain.Runway, error)
+	CreateRunway(input domain.Runway) (domain.RunwayID, error)
 	UpdateRunway(input domain.Runway) (domain.Runway, error)
 	DeleteRunwayWithID(id string) error
 }

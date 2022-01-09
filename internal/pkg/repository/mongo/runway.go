@@ -1,8 +1,6 @@
 package mongo
 
 import (
-	"fmt"
-
 	"github.com/RickardA/multiuser/internal/pkg/domain"
 	"github.com/RickardA/multiuser/internal/pkg/repository"
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,9 +15,9 @@ func (c *Client) GetRunwayByDesignator(designator string) (domain.Runway, error)
 	return domain.Runway{}, repository.ErrNotImplemented
 }
 
-func (c *Client) GetRunwayByID(id primitive.ObjectID) (domain.Runway, error) {
-	fmt.Println("asdas")
-	fmt.Println(id.String())
+func (c *Client) GetRunwayByID(id domain.RunwayID) (domain.Runway, error) {
+	//fmt.Println("asdas")
+	//fmt.Println(id.String())
 	coll := c.db.Database("db").Collection(CollectionName)
 
 	result := coll.FindOne(c.ctx, bson.M{"_id": id})
@@ -40,10 +38,10 @@ func (c *Client) GetRunwayByID(id primitive.ObjectID) (domain.Runway, error) {
 	return res, nil
 }
 
-func (c *Client) CreateRunway(input domain.Runway) (primitive.ObjectID, error) {
+func (c *Client) CreateRunway(input domain.Runway) (domain.RunwayID, error) {
 	obj, err := bson.Marshal(input)
 	if err != nil {
-		return primitive.ObjectID{}, err
+		return domain.RunwayID{}, err
 	}
 
 	coll := c.db.Database("db").Collection(CollectionName)
@@ -51,21 +49,21 @@ func (c *Client) CreateRunway(input domain.Runway) (primitive.ObjectID, error) {
 	result, err := coll.InsertOne(c.ctx, obj)
 
 	if err != nil {
-		return primitive.ObjectID{}, err
+		return domain.RunwayID{}, err
 	}
 
-	if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
-		fmt.Println("asdas")
-		fmt.Println(oid.String())
+	if oid, ok := result.InsertedID.(primitive.Binary); ok {
+		var insertedID primitive.ObjectID
+		err := insertedID.UnmarshalJSON(oid.Data)
 
 		if err != nil {
-			return primitive.ObjectID{}, err
+			return domain.RunwayID{}, err
 		}
 
-		return oid, nil
+		return domain.RunwayID(insertedID), nil
 	}
 
-	return primitive.ObjectID{}, repository.ErrCouldNotGetObjectID
+	return domain.RunwayID{}, repository.ErrCouldNotGetObjectID
 }
 
 func (c *Client) UpdateRunway(input domain.Runway) (domain.Runway, error) {

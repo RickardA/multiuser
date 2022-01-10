@@ -9,36 +9,31 @@ import (
 	"github.com/RickardA/multiuser/graph/generated"
 	"github.com/RickardA/multiuser/graph/model"
 	"github.com/RickardA/multiuser/internal/pkg/domain"
-	"github.com/RickardA/multiuser/internal/pkg/domain/conv/into"
+	"github.com/RickardA/multiuser/internal/pkg/domain/conv/intogql"
 )
 
 func (r *mutationResolver) CreateRunway(ctx context.Context, input model.NewRunway) (*model.GQRunway, error) {
+	rwy := domain.Runway{
+		Designator: input.Designator,
+	}
 
-	newRunway, err := domain.CreateRunway(input.Designator)
+	res, err := r.Client.CreateRunway(rwy)
 
 	if err != nil {
 		return nil, err
 	}
 
-	err = r.RunwayDB.Add(newRunway)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return into.Runway(newRunway), nil
-
-	// panic(fmt.Errorf("not implemented"))
+	intogql.Runway(res)
 }
 
 func (r *queryResolver) GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error) {
-	runway, err := r.RunwayDB.GetByDesignator(designator)
+	/*runway, err := r.RunwayDB.GetByDesignator(designator)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return into.Runway(runway), nil
+	return into.Runway(runway), nil*/
 	// panic(fmt.Errorf("not implemented"))
 }
 

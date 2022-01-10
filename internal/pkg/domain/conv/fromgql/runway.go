@@ -1,4 +1,4 @@
-package from
+package fromgql
 
 import (
 	"github.com/RickardA/multiuser/graph/model"
@@ -7,6 +7,7 @@ import (
 
 func Runway(input model.GQRunway) domain.Runway {
 	return domain.Runway{
+		ID:            domain.RunwayID(input.ID),
 		Designator:    input.Designator,
 		Contamination: GQTupleToMap(input.Contamination),
 		Depth:         GQTupleToMap(input.Depth),

@@ -1,4 +1,4 @@
-package into
+package intogql
 
 import (
 	"github.com/RickardA/multiuser/graph/model"
@@ -8,6 +8,7 @@ import (
 func Runway(input domain.Runway) *model.GQRunway {
 	version := 0
 	return &model.GQRunway{
+		ID:            string(input.ID),
 		Designator:    input.Designator,
 		Contamination: mapToGQTuple(input.Contamination),
 		Depth:         mapToGQTuple(input.Depth),

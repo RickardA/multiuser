@@ -1,19 +1,38 @@
 package app
 
-func NewClient(rwyRepo runwayRepository, conflcitRepo conflictRepository) Client {
+import "github.com/RickardA/multiuser/internal/pkg/domain"
+
+func NewClient(repo Repository) Client {
 	return Client{
-		runwayRepo:   rwyRepo,
-		conflictRepo: conflcitRepo,
+		repository: repo,
 	}
 }
 
 type Client struct {
-	runwayRepo   runwayRepository
-	conflictRepo conflictRepository
+	repository Repository
 }
 
-type runwayRepository interface {
+type Interface interface {
+	Repository
 }
 
-type conflictRepository interface {
+type Repository interface {
+	RunwayRepository
+	ConflictRepository
+}
+
+type RunwayRepository interface {
+	GetRunwayByDesignator(designator string) (domain.Runway, error)
+	GetRunwayByID(id domain.RunwayID) (domain.Runway, error)
+	CreateRunway(input domain.Runway) (domain.RunwayID, error)
+	UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.Runway, error)
+	DeleteRunwayWithID(id domain.RunwayID) error
+}
+
+type ConflictRepository interface {
+	GetConflictByID(id domain.ConflictID) (domain.Conflict, error)
+	GetConflictForRunway(runwayID domain.RunwayID) (domain.Conflict, error)
+	CreateConflict(input domain.Conflict) (domain.ConflictID, error)
+	UpdateConflict(input domain.Conflict) (domain.Conflict, error)
+	DeleteConflictWithID(id domain.ConflictID) error
 }

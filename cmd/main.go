@@ -9,7 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/RickardA/multiuser/graph"
 	"github.com/RickardA/multiuser/graph/generated"
-	memory_runway "github.com/RickardA/multiuser/internal/pkg/repository/runway/memory"
+	"github.com/RickardA/multiuser/internal/app"
+	"github.com/RickardA/multiuser/internal/pkg/repository/mongo"
 )
 
 const defaultPort = "8080"
@@ -20,7 +21,15 @@ func main() {
 		port = defaultPort
 	}
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{RunwayDB: memory_runway.New()}}))
+	db, err := mongo.NewConnection("mongodb://localhost")
+
+	if err != nil {
+		panic("Could not connect to db")
+	}
+
+	client := app.NewClient(&db)
+
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{Client: client}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)

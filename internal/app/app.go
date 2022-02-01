@@ -5,7 +5,13 @@ import "github.com/RickardA/multiuser/internal/pkg/domain"
 var _ Interface = &Client{}
 
 func (c *Client) GetRunwayByDesignator(designator string) (domain.Runway, error) {
-	return domain.Runway{}, nil
+	rwy, err := c.repository.GetRunwayByDesignator(designator)
+
+	if err != nil {
+		return domain.Runway{}, err
+	}
+
+	return rwy, nil
 }
 
 func (c *Client) GetRunwayByID(id domain.RunwayID) (domain.Runway, error) {

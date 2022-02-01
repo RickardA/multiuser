@@ -1,21 +1,6 @@
 package sync_handler
 
-import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"reflect"
-	"regexp"
-	"strings"
-
-	"github.com/RickardA/multiuser/internal/pkg/domain"
-	conflict_repository "github.com/RickardA/multiuser/internal/pkg/repository/conflict"
-	"github.com/RickardA/multiuser/internal/pkg/repository/runway"
-
-	"github.com/google/uuid"
-)
-
-type SyncHandlerService interface {
+/*type SyncHandlerService interface {
 	New(db runway.RunwayRepository, conflictDB conflict_repository.ConflictObjRepository) (SyncHandler, error)
 	CheckVersionMismatch(localRunway domain.Runway) (bool, error)
 	GetConflictingFields(localRunway domain.Runway)
@@ -47,7 +32,7 @@ func (s SyncHandler) CheckVersionMismatch(localRunway domain.Runway) (bool, erro
 	return true, nil
 }
 
-func (s SyncHandler) GetConflictingFields(localRunway domain.Runway, remoteRunway domain.Runway) domain.ConflictObj {
+func (s SyncHandler) GetConflictingFields(localRunway domain.Runway, remoteRunway domain.Runway) domain.Conflict {
 	localRunwayElems := reflect.ValueOf(&localRunway).Elem()
 	remoteRunwayElems := reflect.ValueOf(&remoteRunway).Elem()
 
@@ -86,8 +71,8 @@ func (s SyncHandler) GetConflictingFields(localRunway domain.Runway, remoteRunwa
 		}
 	}
 
-	return domain.ConflictObj{
-		ID:               uuid.New(),
+	return domain.Conflict{
+		//ID:               uuid.New(),
 		Remote:           diff["REMOTE"],
 		Local:            diff["LOCAL"],
 		ResolutionMethod: "LOCAL",
@@ -247,4 +232,4 @@ func isLoopable(v interface{}) (res bool) {
 	}()
 	reflect.ValueOf(v).Len()
 	return true
-}
+}*/

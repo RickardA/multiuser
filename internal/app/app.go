@@ -13,7 +13,13 @@ func (c *Client) GetRunwayByID(id domain.RunwayID) (domain.Runway, error) {
 }
 
 func (c *Client) CreateRunway(input domain.Runway) (domain.RunwayID, error) {
-	return domain.RunwayID(""), nil
+	runwayID, err := c.repository.CreateRunway(input)
+
+	if err != nil {
+		return domain.RunwayID(""), err
+	}
+
+	return runwayID, nil
 }
 
 func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.Runway, error) {

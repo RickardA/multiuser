@@ -1,15 +1,6 @@
 package sync_handler
 
-import (
-	"fmt"
-	"testing"
-
-	"github.com/RickardA/multiuser/internal/pkg/domain"
-	memory_conflict_repository "github.com/RickardA/multiuser/internal/pkg/repository/conflict/memory"
-	memory_runway "github.com/RickardA/multiuser/internal/pkg/repository/runway/memory"
-)
-
-func TestSyncHandler_CheckVersionMismatch(t *testing.T) {
+/*func TestSyncHandler_CheckVersionMismatch(t *testing.T) {
 	repo := memory_runway.New()
 	conflictRepo := memory_conflict_repository.New()
 
@@ -142,4 +133,4 @@ func TestSyncHandler_ApplyChanges(t *testing.T) {
 
 	syncHandler.applyChanges(conflicts.ID, "LOCAL")
 
-}
+}*/

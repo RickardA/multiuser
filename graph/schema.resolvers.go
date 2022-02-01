@@ -5,14 +5,15 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/RickardA/multiuser/graph/generated"
 	"github.com/RickardA/multiuser/graph/model"
 	"github.com/RickardA/multiuser/internal/pkg/domain"
-	"github.com/RickardA/multiuser/internal/pkg/domain/conv/intogql"
+	"github.com/davecgh/go-spew/spew"
 )
 
-func (r *mutationResolver) CreateRunway(ctx context.Context, input model.NewRunway) (*model.GQRunway, error) {
+func (r *mutationResolver) CreateRunway(ctx context.Context, input model.NewRunway) (string, error) {
 	rwy := domain.Runway{
 		Designator: input.Designator,
 	}
@@ -20,21 +21,15 @@ func (r *mutationResolver) CreateRunway(ctx context.Context, input model.NewRunw
 	res, err := r.Client.CreateRunway(rwy)
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	intogql.Runway(res)
+	spew.Dump(res)
+	return string(res), nil
 }
 
 func (r *queryResolver) GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error) {
-	/*runway, err := r.RunwayDB.GetByDesignator(designator)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return into.Runway(runway), nil*/
-	// panic(fmt.Errorf("not implemented"))
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Mutation returns generated.MutationResolver implementation.

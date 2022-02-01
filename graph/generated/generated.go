@@ -67,7 +67,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateRunway(ctx context.Context, input model.NewRunway) (*model.GQRunway, error)
+	CreateRunway(ctx context.Context, input model.NewRunway) (string, error)
 }
 type QueryResolver interface {
 	GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error)
@@ -244,7 +244,7 @@ var sources = []*ast.Source{
 # https://gqlgen.com/getting-started/
 
 type GQRunway {
-  id: ID!
+  id: String!
   designator: String!
   contamination: [GQTuple]
   coverage: [GQTuple]
@@ -267,7 +267,7 @@ input NewRunway {
 }
 
 type Mutation {
-  createRunway(input: NewRunway!): GQRunway!
+  createRunway(input: NewRunway!): String!
 }
 `, BuiltIn: false},
 }
@@ -392,7 +392,7 @@ func (ec *executionContext) _GQRunway_id(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _GQRunway_designator(ctx context.Context, field graphql.CollectedField, obj *model.GQRunway) (ret graphql.Marshaler) {
@@ -697,9 +697,9 @@ func (ec *executionContext) _Mutation_createRunway(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GQRunway)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNGQRunway2ᚖgithubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQRunway(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getRunwayByDesignator(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2368,35 +2368,6 @@ func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interf
 
 func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) marshalNGQRunway2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQRunway(ctx context.Context, sel ast.SelectionSet, v model.GQRunway) graphql.Marshaler {
-	return ec._GQRunway(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNGQRunway2ᚖgithubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQRunway(ctx context.Context, sel ast.SelectionSet, v *model.GQRunway) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._GQRunway(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalID(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalID(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")

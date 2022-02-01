@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -21,7 +22,10 @@ func main() {
 		port = defaultPort
 	}
 
-	db, err := mongo.NewConnection("mongodb://localhost")
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+
+	db, err := mongo.NewConnection(ctx, "mongodb://localhost")
 
 	if err != nil {
 		panic("Could not connect to db")

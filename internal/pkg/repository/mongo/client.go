@@ -3,7 +3,6 @@ package mongo
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,12 +14,11 @@ type Client struct {
 	ctx context.Context
 }
 
-func NewConnection(uri string) (Client, error) {
+func NewConnection(ctx context.Context, uri string) (Client, error) {
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
 		return Client{}, err
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
 		return Client{}, err

@@ -3,7 +3,7 @@
 # https://gqlgen.com/getting-started/
 
 type GQRunway {
-  id: ID!
+  id: String!
   designator: String!
   contamination: [GQTuple]
   coverage: [GQTuple]
@@ -26,5 +26,5 @@ input NewRunway {
 }
 
 type Mutation {
-  createRunway(input: NewRunway!): GQRunway!
+  createRunway(input: NewRunway!): String!
 }

@@ -15,7 +15,13 @@ func (c *Client) GetRunwayByDesignator(designator string) (domain.Runway, error)
 }
 
 func (c *Client) GetRunwayByID(id domain.RunwayID) (domain.Runway, error) {
-	return domain.Runway{}, nil
+	rwy, err := c.repository.GetRunwayByID(id)
+
+	if err != nil {
+		return domain.Runway{}, err
+	}
+
+	return rwy, nil
 }
 
 func (c *Client) CreateRunway(input domain.Runway) (domain.RunwayID, error) {

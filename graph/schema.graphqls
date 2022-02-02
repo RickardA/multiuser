@@ -19,6 +19,7 @@ type GQTuple {
 
 type Query {
   getRunwayByDesignator(designator: String!): GQRunway
+  getRunwayByID(id: String!): GQRunway
 }
 
 input NewRunway {

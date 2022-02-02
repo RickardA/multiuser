@@ -63,6 +63,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		GetRunwayByDesignator func(childComplexity int, designator string) int
+		GetRunwayByID         func(childComplexity int, id string) int
 	}
 }
 
@@ -71,6 +72,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error)
+	GetRunwayByID(ctx context.Context, id string) (*model.GQRunway, error)
 }
 
 type executableSchema struct {
@@ -175,6 +177,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetRunwayByDesignator(childComplexity, args["designator"].(string)), true
 
+	case "Query.getRunwayByID":
+		if e.complexity.Query.GetRunwayByID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getRunwayByID_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetRunwayByID(childComplexity, args["id"].(string)), true
+
 	}
 	return 0, false
 }
@@ -260,6 +274,7 @@ type GQTuple {
 
 type Query {
   getRunwayByDesignator(designator: String!): GQRunway
+  getRunwayByID(id: String!): GQRunway
 }
 
 input NewRunway {
@@ -319,6 +334,21 @@ func (ec *executionContext) field_Query_getRunwayByDesignator_args(ctx context.C
 		}
 	}
 	args["designator"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getRunwayByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -728,6 +758,45 @@ func (ec *executionContext) _Query_getRunwayByDesignator(ctx context.Context, fi
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetRunwayByDesignator(rctx, args["designator"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GQRunway)
+	fc.Result = res
+	return ec.marshalOGQRunway2ᚖgithubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQRunway(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getRunwayByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getRunwayByID_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetRunwayByID(rctx, args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2094,6 +2163,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getRunwayByDesignator(ctx, field)
+				return res
+			})
+		case "getRunwayByID":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getRunwayByID(ctx, field)
 				return res
 			})
 		case "__type":

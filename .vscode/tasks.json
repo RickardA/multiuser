@@ -1,8 +1,8 @@
 {
       "version": "2.0.0",
       "tasks": [{
-          "label": "Generate Proto Files",
-          "command": "sh ${workspaceFolder}/scripts/generate-grpc.sh", // Could be any other shell command
+          "label": "Generate Graphql",
+          "command": "sh ${workspaceFolder}/scripts/generate-graphql.sh", // Could be any other shell command
           "args": [],
           "type": "shell"
       }]

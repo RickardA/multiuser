@@ -9,6 +9,7 @@ import (
 	"github.com/RickardA/multiuser/graph/generated"
 	"github.com/RickardA/multiuser/graph/model"
 	"github.com/RickardA/multiuser/internal/pkg/domain"
+	"github.com/RickardA/multiuser/internal/pkg/domain/conv/fromgql"
 	"github.com/RickardA/multiuser/internal/pkg/domain/conv/intogql"
 )
 
@@ -24,6 +25,17 @@ func (r *mutationResolver) CreateRunway(ctx context.Context, input model.NewRunw
 	}
 
 	return string(res), nil
+}
+
+func (r *mutationResolver) UpdateRunway(ctx context.Context, input model.GQRunwayInput) (*model.GQRunway, error) {
+	runway := fromgql.Runway(input)
+	rwy, err := r.Client.UpdateRunway(domain.RunwayID(input.ID), runway)
+
+	if err != nil {
+		return &model.GQRunway{}, err
+	}
+
+	return intogql.Runway(rwy), nil
 }
 
 func (r *queryResolver) GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error) {

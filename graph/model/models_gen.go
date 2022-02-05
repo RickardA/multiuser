@@ -12,7 +12,22 @@ type GQRunway struct {
 	LatestVersion *int       `json:"latestVersion"`
 }
 
+type GQRunwayInput struct {
+	ID            string          `json:"id"`
+	Designator    string          `json:"designator"`
+	Contamination []*GQTupleInput `json:"contamination"`
+	Coverage      []*GQTupleInput `json:"coverage"`
+	Depth         []*GQTupleInput `json:"depth"`
+	LooseSand     *bool           `json:"looseSand"`
+	LatestVersion *int            `json:"latestVersion"`
+}
+
 type GQTuple struct {
+	Key   string `json:"key"`
+	Value int    `json:"value"`
+}
+
+type GQTupleInput struct {
 	Key   string `json:"key"`
 	Value int    `json:"value"`
 }

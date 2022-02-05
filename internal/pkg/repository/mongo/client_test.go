@@ -16,11 +16,13 @@ func TestClient_ListDatabaseNames(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := NewConnection("mongodb://localhost")
+			c, exitFunc, err := NewMongoTestConnection()
 
 			if err != nil {
-				t.Errorf("Could not create new connection to db, error %w", err)
+				t.Error("Could not create database connection, err %w", err)
 			}
+
+			defer exitFunc()
 
 			if err := c.ListDatabaseNames(); (err != nil) != tt.wantErr {
 				t.Errorf("Client.ListDatabaseNames() error = %v, wantErr %v", err, tt.wantErr)

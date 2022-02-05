@@ -5,7 +5,7 @@ import (
 	"github.com/RickardA/multiuser/internal/pkg/domain"
 )
 
-func Runway(input model.GQRunway) domain.Runway {
+func Runway(input model.GQRunwayInput) domain.Runway {
 	return domain.Runway{
 		ID:            domain.RunwayID(input.ID),
 		Designator:    input.Designator,
@@ -17,7 +17,7 @@ func Runway(input model.GQRunway) domain.Runway {
 	}
 }
 
-func GQTupleToMap(tuples []*model.GQTuple) map[string]int {
+func GQTupleToMap(tuples []*model.GQTupleInput) map[string]int {
 	returnMap := make(map[string]int)
 	for _, val := range tuples {
 		returnMap[val.Key] = val.Value

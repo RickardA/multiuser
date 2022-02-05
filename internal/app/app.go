@@ -35,7 +35,13 @@ func (c *Client) CreateRunway(input domain.Runway) (domain.RunwayID, error) {
 }
 
 func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.Runway, error) {
-	return domain.Runway{}, nil
+	updatedRunway, err := c.repository.UpdateRunway(id, input)
+
+	if err != nil {
+		return domain.Runway{}, err
+	}
+
+	return updatedRunway, nil
 }
 
 func (c *Client) DeleteRunwayWithID(id domain.RunwayID) error {

@@ -26,6 +26,22 @@ input NewRunway {
   designator: String!
 }
 
+input GQRunwayInput {
+  id: String!
+  designator: String!
+  contamination: [GQTupleInput]
+  coverage: [GQTupleInput]
+  depth: [GQTupleInput]
+  looseSand: Boolean
+  latestVersion: Int
+}
+
+input GQTupleInput {
+  key: String!
+  value: Int!
+}
+
 type Mutation {
   createRunway(input: NewRunway!): String!
+  updateRunway(input: GQRunwayInput!): GQRunway
 }

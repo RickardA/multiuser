@@ -2,14 +2,16 @@ package app
 
 import "github.com/RickardA/multiuser/internal/pkg/domain"
 
-func NewClient(repo Repository) Client {
+func NewClient(repo Repository, syncHandler SyncHandler) Client {
 	return Client{
-		repository: repo,
+		repository:  repo,
+		syncHandler: syncHandler,
 	}
 }
 
 type Client struct {
-	repository Repository
+	repository  Repository
+	syncHandler SyncHandler
 }
 
 type Interface interface {
@@ -35,4 +37,10 @@ type ConflictRepository interface {
 	CreateConflict(input domain.Conflict) (domain.ConflictID, error)
 	UpdateConflict(input domain.Conflict) (domain.Conflict, error)
 	DeleteConflictWithID(id domain.ConflictID) error
+}
+
+type SyncHandler interface {
+	CheckVersionMismatch(localRunway domain.Runway) (bool, error)
+	GetConflictingFields(localRunway domain.Runway, remoteRunway domain.Runway) domain.Conflict
+	CreateConflict(localRunway domain.Runway) (domain.ConflictID, error)
 }

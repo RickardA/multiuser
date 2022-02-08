@@ -18,5 +18,4 @@ type Runway struct {
 	Depth         map[string]int
 	LooseSand     bool
 	LatestVersion int
-	MetaData      struct{}
 }

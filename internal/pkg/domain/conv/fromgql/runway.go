@@ -13,7 +13,7 @@ func Runway(input model.GQRunwayInput) domain.Runway {
 		Depth:         GQTupleToMap(input.Depth),
 		Coverage:      GQTupleToMap(input.Coverage),
 		LooseSand:     *input.LooseSand,
-		LatestVersion: 0,
+		LatestVersion: *input.LatestVersion,
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 	"github.com/RickardA/multiuser/graph/generated"
 	"github.com/RickardA/multiuser/internal/app"
 	"github.com/RickardA/multiuser/internal/pkg/repository/mongo"
+	"github.com/RickardA/multiuser/internal/pkg/sync_handler"
 )
 
 const defaultPort = "8080"
@@ -31,7 +32,9 @@ func main() {
 		panic("Could not connect to db")
 	}
 
-	client := app.NewClient(&db)
+	syncHandler, err := sync_handler.New(&db)
+
+	client := app.NewClient(&db, syncHandler)
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{Client: client}}))
 

@@ -6,7 +6,6 @@ import (
 )
 
 func Runway(input domain.Runway) *model.GQRunway {
-	version := 0
 	return &model.GQRunway{
 		ID:            string(input.ID),
 		Designator:    input.Designator,
@@ -14,7 +13,7 @@ func Runway(input domain.Runway) *model.GQRunway {
 		Depth:         mapToGQTuple(input.Depth),
 		Coverage:      mapToGQTuple(input.Coverage),
 		LooseSand:     &input.LooseSand,
-		LatestVersion: &version,
+		LatestVersion: &input.LatestVersion,
 	}
 }
 

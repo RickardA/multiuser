@@ -1,35 +1,81 @@
 package sync_handler
 
-/*type SyncHandlerService interface {
-	New(db runway.RunwayRepository, conflictDB conflict_repository.ConflictObjRepository) (SyncHandler, error)
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"reflect"
+	"regexp"
+	"strings"
+
+	"github.com/RickardA/multiuser/internal/pkg/domain"
+	"github.com/RickardA/multiuser/internal/pkg/repository"
+	log "github.com/sirupsen/logrus"
+)
+
+var _ SyncHandlerService = &SyncHandler{}
+
+type SyncHandlerService interface {
 	CheckVersionMismatch(localRunway domain.Runway) (bool, error)
-	GetConflictingFields(localRunway domain.Runway)
+	GetConflictingFields(localRunway domain.Runway, remoteRunway domain.Runway) domain.Conflict
+	CreateConflict(localRunway domain.Runway) (domain.ConflictID, error)
 }
 
 type SyncHandler struct {
-	db         runway.RunwayRepository
-	conflictDB conflict_repository.ConflictObjRepository
+	db repository.Repository
 }
 
-func New(db runway.RunwayRepository, conflictDB conflict_repository.ConflictObjRepository) (SyncHandler, error) {
+func New(db repository.Repository) (SyncHandler, error) {
 	return SyncHandler{
-		db:         db,
-		conflictDB: conflictDB,
+		db: db,
 	}, nil
 }
 
 func (s SyncHandler) CheckVersionMismatch(localRunway domain.Runway) (bool, error) {
-	remoteRunway, err := s.db.GetByDesignator(localRunway.Designator)
+	remoteRunway, err := s.db.GetRunwayByID(localRunway.ID)
 
 	if err != nil {
+		log.WithError(err).WithField("id", localRunway.ID).Error("Could not get runway from db")
 		return false, err
 	}
 
 	if remoteRunway.LatestVersion == localRunway.LatestVersion {
+		log.WithFields(log.Fields{
+			"localVersion":  localRunway.LatestVersion,
+			"remoteVersion": remoteRunway.LatestVersion,
+			"id":            localRunway.ID,
+		}).Info("Versions matching")
 		return false, nil
 	}
 
+	log.WithFields(log.Fields{
+		"localVersion":  localRunway.LatestVersion,
+		"remoteVersion": remoteRunway.LatestVersion,
+		"id":            localRunway.ID,
+	}).Info("Versions are not matching")
 	return true, nil
+}
+
+func (s SyncHandler) CreateConflict(localRunway domain.Runway) (domain.ConflictID, error) {
+	remoteRunway, err := s.db.GetRunwayByID(localRunway.ID)
+
+	if err != nil {
+		log.WithError(err).WithField("id", localRunway.ID).Error("Could not get runway from db")
+		return domain.ConflictID(""), err
+	}
+
+	log.WithField("id", localRunway.ID).Info("Getting conflicting fields")
+	conflict := s.GetConflictingFields(localRunway, remoteRunway)
+
+	conflictID, err := s.db.CreateConflict(conflict)
+
+	if err != nil {
+		log.WithError(err).WithField("id", localRunway.ID).Error("Could not create conflict in db")
+		return domain.ConflictID(""), err
+	}
+
+	log.WithFields(log.Fields{"id": localRunway.ID, "conflictID": conflictID}).Info("Conflict created in db")
+	return conflictID, nil
 }
 
 func (s SyncHandler) GetConflictingFields(localRunway domain.Runway, remoteRunway domain.Runway) domain.Conflict {
@@ -72,7 +118,7 @@ func (s SyncHandler) GetConflictingFields(localRunway domain.Runway, remoteRunwa
 	}
 
 	return domain.Conflict{
-		//ID:               uuid.New(),
+		RunwayID:         localRunway.ID,
 		Remote:           diff["REMOTE"],
 		Local:            diff["LOCAL"],
 		ResolutionMethod: "LOCAL",
@@ -109,9 +155,9 @@ func getJSONTag(tag string, key string) string {
 	return returnString
 }
 
-func (s SyncHandler) applyChanges(conflictID uuid.UUID, strategy string) {
+func (s SyncHandler) applyChanges(conflictID domain.ConflictID, strategy string) {
 	fmt.Println("Apply Changes")
-	remoteRunway, err := s.db.GetByDesignator("10-23")
+	remoteRunway, err := s.db.GetRunwayByDesignator("10-23")
 
 	fmt.Printf("Remote runway before %v\n", remoteRunway)
 
@@ -120,7 +166,7 @@ func (s SyncHandler) applyChanges(conflictID uuid.UUID, strategy string) {
 		os.Exit(1)
 	}
 
-	conflictObj, err := s.conflictDB.GetByID(conflictID)
+	conflictObj, err := s.db.GetConflictByID(conflictID)
 
 	if err != nil {
 		fmt.Println(err)
@@ -232,4 +278,4 @@ func isLoopable(v interface{}) (res bool) {
 	}()
 	reflect.ValueOf(v).Len()
 	return true
-}*/
+}

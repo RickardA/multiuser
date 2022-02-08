@@ -12,6 +12,19 @@ type GQRunway {
   latestVersion: Int
 }
 
+type GQConflict {
+  id: String!
+  runwayID: String!
+  resolutionMethod: String!
+  remote: String!
+  local: String!
+}
+
+type GQConflictTuple {
+  key: String!
+  value: String!
+}
+
 type GQTuple {
   key: String!
   value: Int!
@@ -20,6 +33,7 @@ type GQTuple {
 type Query {
   getRunwayByDesignator(designator: String!): GQRunway
   getRunwayByID(id: String!): GQRunway
+  getConflictByRunwayID(id: String!): GQConflict
 }
 
 input NewRunway {

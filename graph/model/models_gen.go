@@ -2,6 +2,19 @@
 
 package model
 
+type GQConflict struct {
+	ID               string `json:"id"`
+	RunwayID         string `json:"runwayID"`
+	ResolutionMethod string `json:"resolutionMethod"`
+	Remote           string `json:"remote"`
+	Local            string `json:"local"`
+}
+
+type GQConflictTuple struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 type GQRunway struct {
 	ID            string     `json:"id"`
 	Designator    string     `json:"designator"`

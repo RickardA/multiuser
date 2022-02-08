@@ -58,6 +58,16 @@ func (r *queryResolver) GetRunwayByID(ctx context.Context, id string) (*model.GQ
 	return intogql.Runway(rwy), nil
 }
 
+func (r *queryResolver) GetConflictByRunwayID(ctx context.Context, id string) (*model.GQConflict, error) {
+	conflict, err := r.Client.GetConflictForRunway(domain.RunwayID(id))
+
+	if err != nil {
+		return &model.GQConflict{}, err
+	}
+
+	return intogql.Conflict(conflict)
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

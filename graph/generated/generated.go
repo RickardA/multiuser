@@ -42,6 +42,19 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	GQConflict struct {
+		ID               func(childComplexity int) int
+		Local            func(childComplexity int) int
+		Remote           func(childComplexity int) int
+		ResolutionMethod func(childComplexity int) int
+		RunwayID         func(childComplexity int) int
+	}
+
+	GQConflictTuple struct {
+		Key   func(childComplexity int) int
+		Value func(childComplexity int) int
+	}
+
 	GQRunway struct {
 		Contamination func(childComplexity int) int
 		Coverage      func(childComplexity int) int
@@ -63,6 +76,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		GetConflictByRunwayID func(childComplexity int, id string) int
 		GetRunwayByDesignator func(childComplexity int, designator string) int
 		GetRunwayByID         func(childComplexity int, id string) int
 	}
@@ -75,6 +89,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error)
 	GetRunwayByID(ctx context.Context, id string) (*model.GQRunway, error)
+	GetConflictByRunwayID(ctx context.Context, id string) (*model.GQConflict, error)
 }
 
 type executableSchema struct {
@@ -91,6 +106,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "GQConflict.id":
+		if e.complexity.GQConflict.ID == nil {
+			break
+		}
+
+		return e.complexity.GQConflict.ID(childComplexity), true
+
+	case "GQConflict.local":
+		if e.complexity.GQConflict.Local == nil {
+			break
+		}
+
+		return e.complexity.GQConflict.Local(childComplexity), true
+
+	case "GQConflict.remote":
+		if e.complexity.GQConflict.Remote == nil {
+			break
+		}
+
+		return e.complexity.GQConflict.Remote(childComplexity), true
+
+	case "GQConflict.resolutionMethod":
+		if e.complexity.GQConflict.ResolutionMethod == nil {
+			break
+		}
+
+		return e.complexity.GQConflict.ResolutionMethod(childComplexity), true
+
+	case "GQConflict.runwayID":
+		if e.complexity.GQConflict.RunwayID == nil {
+			break
+		}
+
+		return e.complexity.GQConflict.RunwayID(childComplexity), true
+
+	case "GQConflictTuple.key":
+		if e.complexity.GQConflictTuple.Key == nil {
+			break
+		}
+
+		return e.complexity.GQConflictTuple.Key(childComplexity), true
+
+	case "GQConflictTuple.value":
+		if e.complexity.GQConflictTuple.Value == nil {
+			break
+		}
+
+		return e.complexity.GQConflictTuple.Value(childComplexity), true
 
 	case "GQRunway.contamination":
 		if e.complexity.GQRunway.Contamination == nil {
@@ -178,6 +242,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateRunway(childComplexity, args["input"].(model.GQRunwayInput)), true
+
+	case "Query.getConflictByRunwayID":
+		if e.complexity.Query.GetConflictByRunwayID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getConflictByRunwayID_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetConflictByRunwayID(childComplexity, args["id"].(string)), true
 
 	case "Query.getRunwayByDesignator":
 		if e.complexity.Query.GetRunwayByDesignator == nil {
@@ -281,6 +357,19 @@ type GQRunway {
   latestVersion: Int
 }
 
+type GQConflict {
+  id: String!
+  runwayID: String!
+  resolutionMethod: String!
+  remote: String!
+  local: String!
+}
+
+type GQConflictTuple {
+  key: String!
+  value: String!
+}
+
 type GQTuple {
   key: String!
   value: Int!
@@ -289,6 +378,7 @@ type GQTuple {
 type Query {
   getRunwayByDesignator(designator: String!): GQRunway
   getRunwayByID(id: String!): GQRunway
+  getConflictByRunwayID(id: String!): GQConflict
 }
 
 input NewRunway {
@@ -367,6 +457,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_getConflictByRunwayID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_getRunwayByDesignator_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -434,6 +539,251 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _GQConflict_id(ctx context.Context, field graphql.CollectedField, obj *model.GQConflict) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GQConflict",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GQConflict_runwayID(ctx context.Context, field graphql.CollectedField, obj *model.GQConflict) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GQConflict",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RunwayID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GQConflict_resolutionMethod(ctx context.Context, field graphql.CollectedField, obj *model.GQConflict) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GQConflict",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ResolutionMethod, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GQConflict_remote(ctx context.Context, field graphql.CollectedField, obj *model.GQConflict) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GQConflict",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Remote, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GQConflict_local(ctx context.Context, field graphql.CollectedField, obj *model.GQConflict) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GQConflict",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Local, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GQConflictTuple_key(ctx context.Context, field graphql.CollectedField, obj *model.GQConflictTuple) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GQConflictTuple",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Key, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GQConflictTuple_value(ctx context.Context, field graphql.CollectedField, obj *model.GQConflictTuple) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "GQConflictTuple",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Value, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _GQRunway_id(ctx context.Context, field graphql.CollectedField, obj *model.GQRunway) (ret graphql.Marshaler) {
 	defer func() {
@@ -892,6 +1242,45 @@ func (ec *executionContext) _Query_getRunwayByID(ctx context.Context, field grap
 	res := resTmp.(*model.GQRunway)
 	fc.Result = res
 	return ec.marshalOGQRunway2ᚖgithubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQRunway(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getConflictByRunwayID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getConflictByRunwayID_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetConflictByRunwayID(rctx, args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GQConflict)
+	fc.Result = res
+	return ec.marshalOGQConflict2ᚖgithubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQConflict(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2220,6 +2609,85 @@ func (ec *executionContext) unmarshalInputNewRunway(ctx context.Context, obj int
 
 // region    **************************** object.gotpl ****************************
 
+var gQConflictImplementors = []string{"GQConflict"}
+
+func (ec *executionContext) _GQConflict(ctx context.Context, sel ast.SelectionSet, obj *model.GQConflict) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gQConflictImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GQConflict")
+		case "id":
+			out.Values[i] = ec._GQConflict_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "runwayID":
+			out.Values[i] = ec._GQConflict_runwayID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "resolutionMethod":
+			out.Values[i] = ec._GQConflict_resolutionMethod(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "remote":
+			out.Values[i] = ec._GQConflict_remote(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "local":
+			out.Values[i] = ec._GQConflict_local(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var gQConflictTupleImplementors = []string{"GQConflictTuple"}
+
+func (ec *executionContext) _GQConflictTuple(ctx context.Context, sel ast.SelectionSet, obj *model.GQConflictTuple) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gQConflictTupleImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GQConflictTuple")
+		case "key":
+			out.Values[i] = ec._GQConflictTuple_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "value":
+			out.Values[i] = ec._GQConflictTuple_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var gQRunwayImplementors = []string{"GQRunway"}
 
 func (ec *executionContext) _GQRunway(ctx context.Context, sel ast.SelectionSet, obj *model.GQRunway) graphql.Marshaler {
@@ -2362,6 +2830,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getRunwayByID(ctx, field)
+				return res
+			})
+		case "getConflictByRunwayID":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getConflictByRunwayID(ctx, field)
 				return res
 			})
 		case "__type":
@@ -2963,6 +3442,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
+}
+
+func (ec *executionContext) marshalOGQConflict2ᚖgithubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQConflict(ctx context.Context, sel ast.SelectionSet, v *model.GQConflict) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._GQConflict(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOGQRunway2ᚖgithubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQRunway(ctx context.Context, sel ast.SelectionSet, v *model.GQRunway) graphql.Marshaler {

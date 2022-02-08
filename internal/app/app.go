@@ -1,6 +1,9 @@
 package app
 
-import "github.com/RickardA/multiuser/internal/pkg/domain"
+import (
+	"github.com/RickardA/multiuser/internal/pkg/domain"
+	log "github.com/sirupsen/logrus"
+)
 
 var _ Interface = &Client{}
 
@@ -35,6 +38,21 @@ func (c *Client) CreateRunway(input domain.Runway) (domain.RunwayID, error) {
 }
 
 func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.Runway, error) {
+	versionIsMismatched, err := c.syncHandler.CheckVersionMismatch(input)
+
+	if err != nil {
+		return domain.Runway{}, err
+	}
+
+	// If version is mismatched, return error
+	if versionIsMismatched {
+		c.syncHandler.CreateConflict(input)
+		return domain.Runway{}, versionMismatchedError
+	}
+
+	// If no version mismatch, bump it and then update
+	log.WithFields(log.Fields{"id": id}).Info("Bumping version and updating runway")
+	input.LatestVersion += 1
 	updatedRunway, err := c.repository.UpdateRunway(id, input)
 
 	if err != nil {
@@ -53,7 +71,13 @@ func (c *Client) GetConflictByID(id domain.ConflictID) (domain.Conflict, error) 
 }
 
 func (c *Client) GetConflictForRunway(runwayID domain.RunwayID) (domain.Conflict, error) {
-	return domain.Conflict{}, nil
+	conflict, err := c.repository.GetConflictForRunway(runwayID)
+
+	if err != nil {
+		return domain.Conflict{}, err
+	}
+
+	return conflict, nil
 }
 
 func (c *Client) CreateConflict(input domain.Conflict) (domain.ConflictID, error) {

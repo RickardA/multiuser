@@ -36,6 +36,11 @@ type Query {
   getConflictByRunwayID(id: String!): GQConflict
 }
 
+enum Strategy {
+  APPLY_LOCAL
+  APPLY_REMOTE
+}
+
 input NewRunway {
   designator: String!
 }
@@ -58,4 +63,5 @@ input GQTupleInput {
 type Mutation {
   createRunway(input: NewRunway!): String!
   updateRunway(input: GQRunwayInput!): GQRunway
+  resolveConflict(conflictID: String!, strategy: Strategy!): GQRunway
 }

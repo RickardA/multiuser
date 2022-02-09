@@ -6,6 +6,7 @@ import (
 	"github.com/RickardA/multiuser/internal/pkg/domain/conv/intomongo"
 	"github.com/RickardA/multiuser/internal/pkg/repository"
 	mongo "github.com/RickardA/multiuser/internal/pkg/repository/mongo/model"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -20,6 +21,7 @@ func (c *Client) GetConflictByID(id domain.ConflictID) (domain.Conflict, error) 
 	convID, err := intomongo.ConflictID(id)
 
 	if err != nil {
+		log.WithField("conflictID", id).Error("Could not convert domain.ConflictID to mongo.ConflictID")
 		return domain.Conflict{}, err
 	}
 
@@ -29,12 +31,14 @@ func (c *Client) GetConflictByID(id domain.ConflictID) (domain.Conflict, error) 
 
 	bytes, err := result.DecodeBytes()
 	if err != nil {
+		log.WithFields(log.Fields{"conflictID": id, "error": err}).Error("Could not decode bytes")
 		return domain.Conflict{}, err
 	}
 
 	err = bson.Unmarshal(bytes, &res)
 
 	if err != nil {
+		log.WithField("conflictID", id).Error("Could not unmarshal result")
 		return domain.Conflict{}, err
 	}
 

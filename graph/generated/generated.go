@@ -71,8 +71,9 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateRunway func(childComplexity int, input model.NewRunway) int
-		UpdateRunway func(childComplexity int, input model.GQRunwayInput) int
+		CreateRunway    func(childComplexity int, input model.NewRunway) int
+		ResolveConflict func(childComplexity int, conflictID string, strategy model.Strategy) int
+		UpdateRunway    func(childComplexity int, input model.GQRunwayInput) int
 	}
 
 	Query struct {
@@ -85,6 +86,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateRunway(ctx context.Context, input model.NewRunway) (string, error)
 	UpdateRunway(ctx context.Context, input model.GQRunwayInput) (*model.GQRunway, error)
+	ResolveConflict(ctx context.Context, conflictID string, strategy model.Strategy) (*model.GQRunway, error)
 }
 type QueryResolver interface {
 	GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error)
@@ -230,6 +232,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateRunway(childComplexity, args["input"].(model.NewRunway)), true
+
+	case "Mutation.resolveConflict":
+		if e.complexity.Mutation.ResolveConflict == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_resolveConflict_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ResolveConflict(childComplexity, args["conflictID"].(string), args["strategy"].(model.Strategy)), true
 
 	case "Mutation.updateRunway":
 		if e.complexity.Mutation.UpdateRunway == nil {
@@ -381,6 +395,11 @@ type Query {
   getConflictByRunwayID(id: String!): GQConflict
 }
 
+enum Strategy {
+  APPLY_LOCAL
+  APPLY_REMOTE
+}
+
 input NewRunway {
   designator: String!
 }
@@ -403,6 +422,7 @@ input GQTupleInput {
 type Mutation {
   createRunway(input: NewRunway!): String!
   updateRunway(input: GQRunwayInput!): GQRunway
+  resolveConflict(conflictID: String!, strategy: Strategy!): GQRunway
 }
 `, BuiltIn: false},
 }
@@ -424,6 +444,30 @@ func (ec *executionContext) field_Mutation_createRunway_args(ctx context.Context
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_resolveConflict_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["conflictID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("conflictID"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["conflictID"] = arg0
+	var arg1 model.Strategy
+	if tmp, ok := rawArgs["strategy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategy"))
+		arg1, err = ec.unmarshalNStrategy2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐStrategy(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["strategy"] = arg1
 	return args, nil
 }
 
@@ -1153,6 +1197,45 @@ func (ec *executionContext) _Mutation_updateRunway(ctx context.Context, field gr
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().UpdateRunway(rctx, args["input"].(model.GQRunwayInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GQRunway)
+	fc.Result = res
+	return ec.marshalOGQRunway2ᚖgithubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQRunway(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_resolveConflict(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_resolveConflict_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ResolveConflict(rctx, args["conflictID"].(string), args["strategy"].(model.Strategy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2784,6 +2867,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateRunway":
 			out.Values[i] = ec._Mutation_updateRunway(ctx, field)
+		case "resolveConflict":
+			out.Values[i] = ec._Mutation_resolveConflict(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3146,6 +3231,16 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 func (ec *executionContext) unmarshalNNewRunway2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐNewRunway(ctx context.Context, v interface{}) (model.NewRunway, error) {
 	res, err := ec.unmarshalInputNewRunway(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNStrategy2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐStrategy(ctx context.Context, v interface{}) (model.Strategy, error) {
+	var res model.Strategy
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNStrategy2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐStrategy(ctx context.Context, sel ast.SelectionSet, v model.Strategy) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

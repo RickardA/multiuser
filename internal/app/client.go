@@ -16,6 +16,7 @@ type Client struct {
 
 type Interface interface {
 	Repository
+	ResolveConflict(conflictID domain.ConflictID, resolutionStrategy domain.ResolutionStrategy) (domain.Runway, error)
 }
 
 type Repository interface {
@@ -43,4 +44,5 @@ type SyncHandler interface {
 	CheckVersionMismatch(localRunway domain.Runway) (bool, error)
 	GetConflictingFields(localRunway domain.Runway, remoteRunway domain.Runway) domain.Conflict
 	CreateConflict(localRunway domain.Runway) (domain.ConflictID, error)
+	ApplyChanges(remoteRunway domain.Runway, conflict domain.Conflict, strategy domain.ResolutionStrategy) (domain.Runway, error)
 }

@@ -52,7 +52,7 @@ func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.R
 
 	// If no version mismatch, bump it and then update
 	log.WithFields(log.Fields{"id": id}).Info("Bumping version and updating runway")
-	input.LatestVersion += 1
+
 	updatedRunway, err := c.repository.UpdateRunway(id, input)
 
 	if err != nil {
@@ -90,4 +90,30 @@ func (c *Client) UpdateConflict(input domain.Conflict) (domain.Conflict, error) 
 
 func (c *Client) DeleteConflictWithID(id domain.ConflictID) error {
 	return nil
+}
+
+func (c *Client) ResolveConflict(conflictID domain.ConflictID, resolutionStrategy domain.ResolutionStrategy) (domain.Runway, error) {
+	// Get conflict from db
+	conflict, err := c.repository.GetConflictByID(conflictID)
+
+	if err != nil {
+		return domain.Runway{}, err
+	}
+
+	// Get runway from db
+	remoteRwy, err := c.repository.GetRunwayByID(conflict.RunwayID)
+
+	if err != nil {
+		return domain.Runway{}, err
+	}
+
+	//Apply changes
+	modifiedRwy, err := c.syncHandler.ApplyChanges(remoteRwy, conflict, resolutionStrategy)
+
+	if err != nil {
+		return domain.Runway{}, err
+	}
+
+	//Save modified runway and return result
+	return c.repository.UpdateRunway(conflict.RunwayID, modifiedRwy)
 }

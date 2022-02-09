@@ -3,7 +3,6 @@ package sync_handler
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -155,37 +154,15 @@ func getJSONTag(tag string, key string) string {
 	return returnString
 }
 
-func (s SyncHandler) applyChanges(conflictID domain.ConflictID, strategy string) {
-	fmt.Println("Apply Changes")
-	remoteRunway, err := s.db.GetRunwayByDesignator("10-23")
-
-	fmt.Printf("Remote runway before %v\n", remoteRunway)
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	conflictObj, err := s.db.GetConflictByID(conflictID)
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
+func (s SyncHandler) ApplyChanges(remoteRunway domain.Runway, conflict domain.Conflict, strategy domain.ResolutionStrategy) (domain.Runway, error) {
 	switch strategy {
-	case "LOCAL":
-		applyObjChanges(remoteRunway, conflictObj.Local)
-		fmt.Printf("Remote runway after %v\n", remoteRunway)
-	case "REMOTE":
-		applyObjChanges(remoteRunway, conflictObj.Remote)
-		fmt.Printf("Remote runway after %v\n", remoteRunway)
+	case domain.APPLY_LOCAL:
+		return applyObjChanges(remoteRunway, conflict.Local)
+	case domain.APPLY_REMOTE:
+		return applyObjChanges(remoteRunway, conflict.Remote)
 	default:
-		fmt.Println("Impossible strategy")
-		os.Exit(1)
+		return domain.Runway{}, ErrorImpossibleStrategy
 	}
-
-	fmt.Printf("DB runway: %v\n", remoteRunway)
 }
 
 func convertToMapInterface(rwy domain.Runway) (returnMap map[string]interface{}, err error) {
@@ -204,25 +181,30 @@ func convertToMapInterface(rwy domain.Runway) (returnMap map[string]interface{},
 	return returnMap, nil
 }
 
-func applyObjChanges(rwy domain.Runway, conflictObj map[string]interface{}) {
+func convertToStruct(m map[string]interface{}) (domain.Runway, error) {
+	data, _ := json.Marshal(m)
+	var result domain.Runway
+	err := json.Unmarshal(data, &result)
+	return result, err
+}
+
+func applyObjChanges(rwy domain.Runway, conflictObj map[string]interface{}) (domain.Runway, error) {
 	rwyMap, err := convertToMapInterface(rwy)
 
 	if err != nil {
-		panic("Something went wrong!!!")
+		return domain.Runway{}, err
 	}
 
-	fmt.Printf("This is rwy map: %v\n", rwyMap)
-
 	for conflictObjKey, conflictObjVal := range conflictObj {
-		if _, keyExists := rwyMap[conflictObjKey]; !keyExists {
-			fmt.Printf("Key does not exist: %v\n", conflictObjKey)
+		// Check if key exists
+		// Or if key is latest version, do not merge
+		if _, keyExists := rwyMap[conflictObjKey]; !keyExists || conflictObjKey == "LatestVersion" {
 			continue
 		}
 
 		if isLoopable(conflictObjVal) {
 			switch reflect.ValueOf(conflictObjVal).Kind() {
 			case reflect.Map:
-				fmt.Println("Value is a map")
 				for _, key := range reflect.ValueOf(conflictObjVal).MapKeys() {
 					strct := reflect.ValueOf(conflictObjVal).MapIndex(key)
 					rwyMap[conflictObjKey].(map[string]interface{})[key.String()] = strct.Interface()
@@ -241,7 +223,8 @@ func applyObjChanges(rwy domain.Runway, conflictObj map[string]interface{}) {
 		}
 
 	}
-	fmt.Printf("This i rwy map after %v\n", rwyMap)
+
+	return convertToStruct(rwyMap)
 }
 
 func compareMapChanges(local map[string]int, remote map[string]int) []string {

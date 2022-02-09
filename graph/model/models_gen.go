@@ -2,6 +2,12 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type GQConflict struct {
 	ID               string `json:"id"`
 	RunwayID         string `json:"runwayID"`
@@ -47,4 +53,45 @@ type GQTupleInput struct {
 
 type NewRunway struct {
 	Designator string `json:"designator"`
+}
+
+type Strategy string
+
+const (
+	StrategyApplyLocal  Strategy = "APPLY_LOCAL"
+	StrategyApplyRemote Strategy = "APPLY_REMOTE"
+)
+
+var AllStrategy = []Strategy{
+	StrategyApplyLocal,
+	StrategyApplyRemote,
+}
+
+func (e Strategy) IsValid() bool {
+	switch e {
+	case StrategyApplyLocal, StrategyApplyRemote:
+		return true
+	}
+	return false
+}
+
+func (e Strategy) String() string {
+	return string(e)
+}
+
+func (e *Strategy) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Strategy(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Strategy", str)
+	}
+	return nil
+}
+
+func (e Strategy) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

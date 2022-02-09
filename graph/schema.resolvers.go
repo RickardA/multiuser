@@ -38,6 +38,16 @@ func (r *mutationResolver) UpdateRunway(ctx context.Context, input model.GQRunwa
 	return intogql.Runway(rwy), nil
 }
 
+func (r *mutationResolver) ResolveConflict(ctx context.Context, conflictID string, strategy model.Strategy) (*model.GQRunway, error) {
+	rwy, err := r.Client.ResolveConflict(domain.ConflictID(conflictID), fromgql.Strategy(strategy))
+
+	if err != nil {
+		return &model.GQRunway{}, err
+	}
+
+	return intogql.Runway(rwy), nil
+}
+
 func (r *queryResolver) GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error) {
 	rwy, err := r.Client.GetRunwayByDesignator(designator)
 

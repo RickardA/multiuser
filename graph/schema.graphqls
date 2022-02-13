@@ -65,3 +65,7 @@ type Mutation {
   updateRunway(input: GQRunwayInput!): GQRunway
   resolveConflict(conflictID: String!, strategy: Strategy!): GQRunway
 }
+
+type Subscription {
+  conflict: GQConflict!
+}

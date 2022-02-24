@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"strconv"
 	"sync"
 
@@ -36,6 +37,7 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -81,6 +83,10 @@ type ComplexityRoot struct {
 		GetRunwayByDesignator func(childComplexity int, designator string) int
 		GetRunwayByID         func(childComplexity int, id string) int
 	}
+
+	Subscription struct {
+		Conflict func(childComplexity int) int
+	}
 }
 
 type MutationResolver interface {
@@ -92,6 +98,9 @@ type QueryResolver interface {
 	GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error)
 	GetRunwayByID(ctx context.Context, id string) (*model.GQRunway, error)
 	GetConflictByRunwayID(ctx context.Context, id string) (*model.GQConflict, error)
+}
+type SubscriptionResolver interface {
+	Conflict(ctx context.Context) (<-chan *model.GQConflict, error)
 }
 
 type executableSchema struct {
@@ -293,6 +302,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetRunwayByID(childComplexity, args["id"].(string)), true
 
+	case "Subscription.conflict":
+		if e.complexity.Subscription.Conflict == nil {
+			break
+		}
+
+		return e.complexity.Subscription.Conflict(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -325,6 +341,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			first = false
 			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
 			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next()
+
+			if data == nil {
+				return nil
+			}
 			data.MarshalGQL(&buf)
 
 			return &graphql.Response{
@@ -423,6 +456,10 @@ type Mutation {
   createRunway(input: NewRunway!): String!
   updateRunway(input: GQRunwayInput!): GQRunway
   resolveConflict(conflictID: String!, strategy: Strategy!): GQRunway
+}
+
+type Subscription {
+  conflict: GQConflict!
 }
 `, BuiltIn: false},
 }
@@ -1435,6 +1472,51 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Subscription_conflict(ctx context.Context, field graphql.CollectedField) (ret func() graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().Conflict(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func() graphql.Marshaler {
+		res, ok := <-resTmp.(<-chan *model.GQConflict)
+		if !ok {
+			return nil
+		}
+		return graphql.WriterFunc(func(w io.Writer) {
+			w.Write([]byte{'{'})
+			graphql.MarshalString(field.Alias).MarshalGQL(w)
+			w.Write([]byte{':'})
+			ec.marshalNGQConflict2ᚖgithubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQConflict(ctx, field.Selections, res).MarshalGQL(w)
+			w.Write([]byte{'}'})
+		})
+	}
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2943,6 +3025,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func() graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "conflict":
+		return ec._Subscription_conflict(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
+}
+
 var __DirectiveImplementors = []string{"__Directive"}
 
 func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionSet, obj *introspection.Directive) graphql.Marshaler {
@@ -3206,6 +3308,20 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNGQConflict2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQConflict(ctx context.Context, sel ast.SelectionSet, v model.GQConflict) graphql.Marshaler {
+	return ec._GQConflict(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGQConflict2ᚖgithubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQConflict(ctx context.Context, sel ast.SelectionSet, v *model.GQConflict) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._GQConflict(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNGQRunwayInput2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQRunwayInput(ctx context.Context, v interface{}) (model.GQRunwayInput, error) {

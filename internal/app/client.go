@@ -1,17 +1,22 @@
 package app
 
-import "github.com/RickardA/multiuser/internal/pkg/domain"
+import (
+	"github.com/RickardA/multiuser/graph/model"
+	"github.com/RickardA/multiuser/internal/pkg/domain"
+)
 
 func NewClient(repo Repository, syncHandler SyncHandler) Client {
 	return Client{
 		repository:  repo,
 		syncHandler: syncHandler,
+		Subs:        make(map[string]chan *model.GQConflict),
 	}
 }
 
 type Client struct {
 	repository  Repository
 	syncHandler SyncHandler
+	Subs        map[string]chan *model.GQConflict
 }
 
 type Interface interface {

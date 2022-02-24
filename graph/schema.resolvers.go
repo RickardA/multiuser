@@ -5,12 +5,14 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/RickardA/multiuser/graph/generated"
 	"github.com/RickardA/multiuser/graph/model"
 	"github.com/RickardA/multiuser/internal/pkg/domain"
 	"github.com/RickardA/multiuser/internal/pkg/domain/conv/fromgql"
 	"github.com/RickardA/multiuser/internal/pkg/domain/conv/intogql"
+	uuid "github.com/nu7hatch/gouuid"
 )
 
 func (r *mutationResolver) CreateRunway(ctx context.Context, input model.NewRunway) (string, error) {
@@ -78,11 +80,30 @@ func (r *queryResolver) GetConflictByRunwayID(ctx context.Context, id string) (*
 	return intogql.Conflict(conflict)
 }
 
+func (r *subscriptionResolver) Conflict(ctx context.Context) (<-chan *model.GQConflict, error) {
+	id, err := uuid.NewV4()
+
+	if err != nil {
+		return nil, err
+	}
+
+	ch := make(chan *model.GQConflict, 1)
+
+	r.Client.Subs[id.String()] = ch
+	fmt.Println("Conflict subscription created")
+
+	return ch, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Subscription returns generated.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

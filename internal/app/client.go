@@ -21,7 +21,7 @@ type Client struct {
 
 type Interface interface {
 	Repository
-	ResolveConflict(conflictID domain.ConflictID, resolutionStrategy domain.ResolutionStrategy) (domain.Runway, error)
+	ResolveConflict(conflictID domain.ConflictID, resolutionStrategy domain.ResolutionStrategy, clientID string) (domain.Runway, error)
 }
 
 type Repository interface {
@@ -33,7 +33,7 @@ type RunwayRepository interface {
 	GetRunwayByDesignator(designator string) (domain.Runway, error)
 	GetRunwayByID(id domain.RunwayID) (domain.Runway, error)
 	CreateRunway(input domain.Runway) (domain.RunwayID, error)
-	UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.Runway, error)
+	UpdateRunway(id domain.RunwayID, input domain.Runway, clientID string) (domain.Runway, error)
 	DeleteRunwayWithID(id domain.RunwayID) error
 }
 
@@ -48,6 +48,6 @@ type ConflictRepository interface {
 type SyncHandler interface {
 	CheckVersionMismatch(localRunway domain.Runway) (bool, error)
 	GetConflictingFields(localRunway domain.Runway, remoteRunway domain.Runway) domain.Conflict
-	CreateConflict(localRunway domain.Runway) (domain.ConflictID, error)
+	CreateConflict(localRunway domain.Runway, clientID string) (domain.ConflictID, error)
 	ApplyChanges(remoteRunway domain.Runway, conflict domain.Conflict, strategy domain.ResolutionStrategy) (domain.Runway, error)
 }

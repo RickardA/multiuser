@@ -208,7 +208,7 @@ func TestClient_UpdateRunway(t *testing.T) {
 				return
 			}
 
-			runway, err := c.UpdateRunway(got, tt.update)
+			runway, err := c.UpdateRunway(got, tt.update, "")
 
 			runway.ID = ""
 

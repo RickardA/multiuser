@@ -31,7 +31,7 @@ func (r *mutationResolver) CreateRunway(ctx context.Context, clientID string, in
 
 func (r *mutationResolver) UpdateRunway(ctx context.Context, clientID string, input model.GQRunwayInput) (*model.GQRunway, error) {
 	runway := fromgql.Runway(input)
-	rwy, err := r.Client.UpdateRunway(domain.RunwayID(input.ID), runway)
+	rwy, err := r.Client.UpdateRunway(domain.RunwayID(input.ID), runway, clientID)
 
 	if err != nil {
 		return &model.GQRunway{}, err
@@ -41,7 +41,7 @@ func (r *mutationResolver) UpdateRunway(ctx context.Context, clientID string, in
 }
 
 func (r *mutationResolver) ResolveConflict(ctx context.Context, clientID string, conflictID string, strategy model.Strategy) (*model.GQRunway, error) {
-	rwy, err := r.Client.ResolveConflict(domain.ConflictID(conflictID), fromgql.Strategy(strategy))
+	rwy, err := r.Client.ResolveConflict(domain.ConflictID(conflictID), fromgql.Strategy(strategy), clientID)
 
 	if err != nil {
 		return &model.GQRunway{}, err
@@ -92,18 +92,15 @@ func (r *queryResolver) SayHello(ctx context.Context) (string, error) {
 
 func (r *subscriptionResolver) Conflict(ctx context.Context, clientID string, runwayID string) (<-chan *model.GQConflict, error) {
 	// Subscription req recieved
-	// Check what runway they want to subscribe to
-	// Put
-
-	id, err := uuid.NewV4()
-
-	if err != nil {
-		return nil, err
-	}
+	// Concat their clientID with the runwayID
+	// clientID-runwayID
+	// Use new id as identifier for what they are subscribing to
+	subID := fmt.Sprintf("%v-%v", clientID, runwayID)
 
 	ch := make(chan *model.GQConflict, 1)
 
-	r.Client.Subs[id.String()] = ch
+	// Save subscription channel
+	r.Client.Subs[subID] = ch
 	fmt.Println("Conflict subscription created")
 
 	return ch, nil

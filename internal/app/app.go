@@ -1,6 +1,9 @@
 package app
 
 import (
+	"fmt"
+
+	"github.com/RickardA/multiuser/graph/model"
 	"github.com/RickardA/multiuser/internal/pkg/domain"
 	log "github.com/sirupsen/logrus"
 )
@@ -37,7 +40,7 @@ func (c *Client) CreateRunway(input domain.Runway) (domain.RunwayID, error) {
 	return runwayID, nil
 }
 
-func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.Runway, error) {
+func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway, clientID string) (domain.Runway, error) {
 	versionIsMismatched, err := c.syncHandler.CheckVersionMismatch(input)
 
 	if err != nil {
@@ -46,14 +49,27 @@ func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.R
 
 	// If version is mismatched, return error
 	if versionIsMismatched {
-		c.syncHandler.CreateConflict(input)
+		log.WithFields(log.Fields{"runwayID": id, "clientID": clientID}).Info("Version mismatched, creating conflict and pushing to subscriber")
+		c.syncHandler.CreateConflict(input, clientID)
+
+		// Get subscription client and send out conflict
+		subID := fmt.Sprintf("%v-%v", clientID, id)
+		sub := c.Subs[subID]
+
+		sub <- &model.GQConflict{
+			ID:               "test",
+			RunwayID:         string(id),
+			ResolutionMethod: "naaaajjs",
+		}
+
+		log.Info("Returning in update runway")
 		return domain.Runway{}, versionMismatchedError
 	}
 
 	// If no version mismatch, bump it and then update
 	log.WithFields(log.Fields{"id": id}).Info("Bumping version and updating runway")
 
-	updatedRunway, err := c.repository.UpdateRunway(id, input)
+	updatedRunway, err := c.repository.UpdateRunway(id, input, clientID)
 
 	if err != nil {
 		return domain.Runway{}, err
@@ -92,7 +108,7 @@ func (c *Client) DeleteConflictWithID(id domain.ConflictID) error {
 	return nil
 }
 
-func (c *Client) ResolveConflict(conflictID domain.ConflictID, resolutionStrategy domain.ResolutionStrategy) (domain.Runway, error) {
+func (c *Client) ResolveConflict(conflictID domain.ConflictID, resolutionStrategy domain.ResolutionStrategy, clientID string) (domain.Runway, error) {
 	// Get conflict from db
 	conflict, err := c.repository.GetConflictByID(conflictID)
 
@@ -115,5 +131,5 @@ func (c *Client) ResolveConflict(conflictID domain.ConflictID, resolutionStrateg
 	}
 
 	//Save modified runway and return result
-	return c.repository.UpdateRunway(conflict.RunwayID, modifiedRwy)
+	return c.repository.UpdateRunway(conflict.RunwayID, modifiedRwy, clientID)
 }

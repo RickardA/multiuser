@@ -6,13 +6,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/RickardA/multiuser/graph"
 	"github.com/RickardA/multiuser/graph/generated"
-	"github.com/RickardA/multiuser/graph/model"
 	"github.com/RickardA/multiuser/internal/app"
 	"github.com/RickardA/multiuser/internal/pkg/repository/mongo"
 	"github.com/RickardA/multiuser/internal/pkg/sync_handler"
@@ -40,27 +38,27 @@ func main() {
 	client := app.NewClient(&db, syncHandler)
 	// Setup Client
 
-	ticker := time.NewTicker(10 * time.Second)
-	quit := make(chan struct{})
+	// ticker := time.NewTicker(10 * time.Second)
+	// quit := make(chan struct{})
 	go func() {
 		fmt.Println("Go func")
-		for {
-			select {
-			case <-ticker.C:
-				fmt.Println("Should send notifications")
-				for _, element := range client.Subs {
-					fmt.Println("Sending conflict notification")
-					element <- &model.GQConflict{
-						ID:               "test",
-						RunwayID:         "test2",
-						ResolutionMethod: "naaaajjs",
-					}
-				}
-			case <-quit:
-				ticker.Stop()
-				return
-			}
-		}
+		// for {
+		// 	select {
+		// 	case <-ticker.C:
+		// 		fmt.Println("Should send notifications")
+		// 		for _, element := range client.Subs {
+		// 			fmt.Println("Sending conflict notification")
+		// 			element <- &model.GQConflict{
+		// 				ID:               "test",
+		// 				RunwayID:         "test2",
+		// 				ResolutionMethod: "naaaajjs",
+		// 			}
+		// 		}
+		// 	case <-quit:
+		// 		ticker.Stop()
+		// 		return
+		// 	}
+		// }
 	}()
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{Client: client}}))

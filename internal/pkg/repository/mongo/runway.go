@@ -97,7 +97,7 @@ func (c *Client) CreateRunway(input domain.Runway) (domain.RunwayID, error) {
 	return "", repository.ErrCouldNotGetObjectID
 }
 
-func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway) (domain.Runway, error) {
+func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway, clientID string) (domain.Runway, error) {
 	coll := c.db.Database("db").Collection(RunwayCollectionName)
 
 	convID, err := intomongo.RunwayID(id)

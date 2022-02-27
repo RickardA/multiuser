@@ -15,7 +15,7 @@ import (
 	uuid "github.com/nu7hatch/gouuid"
 )
 
-func (r *mutationResolver) CreateRunway(ctx context.Context, input model.NewRunway) (string, error) {
+func (r *mutationResolver) CreateRunway(ctx context.Context, clientID string, input model.NewRunway) (string, error) {
 	rwy := domain.Runway{
 		Designator: input.Designator,
 	}
@@ -29,7 +29,7 @@ func (r *mutationResolver) CreateRunway(ctx context.Context, input model.NewRunw
 	return string(res), nil
 }
 
-func (r *mutationResolver) UpdateRunway(ctx context.Context, input model.GQRunwayInput) (*model.GQRunway, error) {
+func (r *mutationResolver) UpdateRunway(ctx context.Context, clientID string, input model.GQRunwayInput) (*model.GQRunway, error) {
 	runway := fromgql.Runway(input)
 	rwy, err := r.Client.UpdateRunway(domain.RunwayID(input.ID), runway)
 
@@ -40,7 +40,7 @@ func (r *mutationResolver) UpdateRunway(ctx context.Context, input model.GQRunwa
 	return intogql.Runway(rwy), nil
 }
 
-func (r *mutationResolver) ResolveConflict(ctx context.Context, conflictID string, strategy model.Strategy) (*model.GQRunway, error) {
+func (r *mutationResolver) ResolveConflict(ctx context.Context, clientID string, conflictID string, strategy model.Strategy) (*model.GQRunway, error) {
 	rwy, err := r.Client.ResolveConflict(domain.ConflictID(conflictID), fromgql.Strategy(strategy))
 
 	if err != nil {
@@ -50,7 +50,7 @@ func (r *mutationResolver) ResolveConflict(ctx context.Context, conflictID strin
 	return intogql.Runway(rwy), nil
 }
 
-func (r *queryResolver) GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error) {
+func (r *queryResolver) GetRunwayByDesignator(ctx context.Context, clientID string, designator string) (*model.GQRunway, error) {
 	rwy, err := r.Client.GetRunwayByDesignator(designator)
 
 	if err != nil {
@@ -60,7 +60,7 @@ func (r *queryResolver) GetRunwayByDesignator(ctx context.Context, designator st
 	return intogql.Runway(rwy), nil
 }
 
-func (r *queryResolver) GetRunwayByID(ctx context.Context, id string) (*model.GQRunway, error) {
+func (r *queryResolver) GetRunwayByID(ctx context.Context, clientID string, id string) (*model.GQRunway, error) {
 	rwy, err := r.Client.GetRunwayByID(domain.RunwayID(id))
 
 	if err != nil {
@@ -70,7 +70,7 @@ func (r *queryResolver) GetRunwayByID(ctx context.Context, id string) (*model.GQ
 	return intogql.Runway(rwy), nil
 }
 
-func (r *queryResolver) GetConflictByRunwayID(ctx context.Context, id string) (*model.GQConflict, error) {
+func (r *queryResolver) GetConflictByRunwayID(ctx context.Context, clientID string, id string) (*model.GQConflict, error) {
 	conflict, err := r.Client.GetConflictForRunway(domain.RunwayID(id))
 
 	if err != nil {
@@ -80,7 +80,21 @@ func (r *queryResolver) GetConflictByRunwayID(ctx context.Context, id string) (*
 	return intogql.Conflict(conflict)
 }
 
-func (r *subscriptionResolver) Conflict(ctx context.Context) (<-chan *model.GQConflict, error) {
+func (r *queryResolver) SayHello(ctx context.Context) (string, error) {
+	id, err := uuid.NewV4()
+
+	if err != nil {
+		return "", err
+	}
+
+	return id.String(), err
+}
+
+func (r *subscriptionResolver) Conflict(ctx context.Context, clientID string, runwayID string) (<-chan *model.GQConflict, error) {
+	// Subscription req recieved
+	// Check what runway they want to subscribe to
+	// Put
+
 	id, err := uuid.NewV4()
 
 	if err != nil {

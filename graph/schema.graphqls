@@ -31,9 +31,10 @@ type GQTuple {
 }
 
 type Query {
-  getRunwayByDesignator(designator: String!): GQRunway
-  getRunwayByID(id: String!): GQRunway
-  getConflictByRunwayID(id: String!): GQConflict
+  getRunwayByDesignator(clientID: String!, designator: String!): GQRunway
+  getRunwayByID(clientID: String!, id: String!): GQRunway
+  getConflictByRunwayID(clientID: String!, id: String!): GQConflict
+  sayHello: String!
 }
 
 enum Strategy {
@@ -61,11 +62,11 @@ input GQTupleInput {
 }
 
 type Mutation {
-  createRunway(input: NewRunway!): String!
-  updateRunway(input: GQRunwayInput!): GQRunway
-  resolveConflict(conflictID: String!, strategy: Strategy!): GQRunway
+  createRunway(clientID: String!, input: NewRunway!): String!
+  updateRunway(clientID: String!, input: GQRunwayInput!): GQRunway
+  resolveConflict(clientID: String!, conflictID: String!, strategy: Strategy!): GQRunway
 }
 
 type Subscription {
-  conflict: GQConflict!
+  conflict(clientID: String!, runwayID: String!): GQConflict!
 }

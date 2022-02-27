@@ -9,6 +9,7 @@ import (
 	"io"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -73,34 +74,36 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateRunway    func(childComplexity int, input model.NewRunway) int
-		ResolveConflict func(childComplexity int, conflictID string, strategy model.Strategy) int
-		UpdateRunway    func(childComplexity int, input model.GQRunwayInput) int
+		CreateRunway    func(childComplexity int, clientID string, input model.NewRunway) int
+		ResolveConflict func(childComplexity int, clientID string, conflictID string, strategy model.Strategy) int
+		UpdateRunway    func(childComplexity int, clientID string, input model.GQRunwayInput) int
 	}
 
 	Query struct {
-		GetConflictByRunwayID func(childComplexity int, id string) int
-		GetRunwayByDesignator func(childComplexity int, designator string) int
-		GetRunwayByID         func(childComplexity int, id string) int
+		GetConflictByRunwayID func(childComplexity int, clientID string, id string) int
+		GetRunwayByDesignator func(childComplexity int, clientID string, designator string) int
+		GetRunwayByID         func(childComplexity int, clientID string, id string) int
+		SayHello              func(childComplexity int) int
 	}
 
 	Subscription struct {
-		Conflict func(childComplexity int) int
+		Conflict func(childComplexity int, clientID string, runwayID string) int
 	}
 }
 
 type MutationResolver interface {
-	CreateRunway(ctx context.Context, input model.NewRunway) (string, error)
-	UpdateRunway(ctx context.Context, input model.GQRunwayInput) (*model.GQRunway, error)
-	ResolveConflict(ctx context.Context, conflictID string, strategy model.Strategy) (*model.GQRunway, error)
+	CreateRunway(ctx context.Context, clientID string, input model.NewRunway) (string, error)
+	UpdateRunway(ctx context.Context, clientID string, input model.GQRunwayInput) (*model.GQRunway, error)
+	ResolveConflict(ctx context.Context, clientID string, conflictID string, strategy model.Strategy) (*model.GQRunway, error)
 }
 type QueryResolver interface {
-	GetRunwayByDesignator(ctx context.Context, designator string) (*model.GQRunway, error)
-	GetRunwayByID(ctx context.Context, id string) (*model.GQRunway, error)
-	GetConflictByRunwayID(ctx context.Context, id string) (*model.GQConflict, error)
+	GetRunwayByDesignator(ctx context.Context, clientID string, designator string) (*model.GQRunway, error)
+	GetRunwayByID(ctx context.Context, clientID string, id string) (*model.GQRunway, error)
+	GetConflictByRunwayID(ctx context.Context, clientID string, id string) (*model.GQConflict, error)
+	SayHello(ctx context.Context) (string, error)
 }
 type SubscriptionResolver interface {
-	Conflict(ctx context.Context) (<-chan *model.GQConflict, error)
+	Conflict(ctx context.Context, clientID string, runwayID string) (<-chan *model.GQConflict, error)
 }
 
 type executableSchema struct {
@@ -240,7 +243,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateRunway(childComplexity, args["input"].(model.NewRunway)), true
+		return e.complexity.Mutation.CreateRunway(childComplexity, args["clientID"].(string), args["input"].(model.NewRunway)), true
 
 	case "Mutation.resolveConflict":
 		if e.complexity.Mutation.ResolveConflict == nil {
@@ -252,7 +255,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ResolveConflict(childComplexity, args["conflictID"].(string), args["strategy"].(model.Strategy)), true
+		return e.complexity.Mutation.ResolveConflict(childComplexity, args["clientID"].(string), args["conflictID"].(string), args["strategy"].(model.Strategy)), true
 
 	case "Mutation.updateRunway":
 		if e.complexity.Mutation.UpdateRunway == nil {
@@ -264,7 +267,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateRunway(childComplexity, args["input"].(model.GQRunwayInput)), true
+		return e.complexity.Mutation.UpdateRunway(childComplexity, args["clientID"].(string), args["input"].(model.GQRunwayInput)), true
 
 	case "Query.getConflictByRunwayID":
 		if e.complexity.Query.GetConflictByRunwayID == nil {
@@ -276,7 +279,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetConflictByRunwayID(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.GetConflictByRunwayID(childComplexity, args["clientID"].(string), args["id"].(string)), true
 
 	case "Query.getRunwayByDesignator":
 		if e.complexity.Query.GetRunwayByDesignator == nil {
@@ -288,7 +291,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetRunwayByDesignator(childComplexity, args["designator"].(string)), true
+		return e.complexity.Query.GetRunwayByDesignator(childComplexity, args["clientID"].(string), args["designator"].(string)), true
 
 	case "Query.getRunwayByID":
 		if e.complexity.Query.GetRunwayByID == nil {
@@ -300,14 +303,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetRunwayByID(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.GetRunwayByID(childComplexity, args["clientID"].(string), args["id"].(string)), true
+
+	case "Query.sayHello":
+		if e.complexity.Query.SayHello == nil {
+			break
+		}
+
+		return e.complexity.Query.SayHello(childComplexity), true
 
 	case "Subscription.conflict":
 		if e.complexity.Subscription.Conflict == nil {
 			break
 		}
 
-		return e.complexity.Subscription.Conflict(childComplexity), true
+		args, err := ec.field_Subscription_conflict_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.Conflict(childComplexity, args["clientID"].(string), args["runwayID"].(string)), true
 
 	}
 	return 0, false
@@ -423,9 +438,10 @@ type GQTuple {
 }
 
 type Query {
-  getRunwayByDesignator(designator: String!): GQRunway
-  getRunwayByID(id: String!): GQRunway
-  getConflictByRunwayID(id: String!): GQConflict
+  getRunwayByDesignator(clientID: String!, designator: String!): GQRunway
+  getRunwayByID(clientID: String!, id: String!): GQRunway
+  getConflictByRunwayID(clientID: String!, id: String!): GQConflict
+  sayHello: String!
 }
 
 enum Strategy {
@@ -453,13 +469,13 @@ input GQTupleInput {
 }
 
 type Mutation {
-  createRunway(input: NewRunway!): String!
-  updateRunway(input: GQRunwayInput!): GQRunway
-  resolveConflict(conflictID: String!, strategy: Strategy!): GQRunway
+  createRunway(clientID: String!, input: NewRunway!): String!
+  updateRunway(clientID: String!, input: GQRunwayInput!): GQRunway
+  resolveConflict(clientID: String!, conflictID: String!, strategy: Strategy!): GQRunway
 }
 
 type Subscription {
-  conflict: GQConflict!
+  conflict(clientID: String!, runwayID: String!): GQConflict!
 }
 `, BuiltIn: false},
 }
@@ -472,15 +488,24 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_createRunway_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.NewRunway
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewRunway2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐNewRunway(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["clientID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientID"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["clientID"] = arg0
+	var arg1 model.NewRunway
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNNewRunway2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐNewRunway(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -488,38 +513,56 @@ func (ec *executionContext) field_Mutation_resolveConflict_args(ctx context.Cont
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["conflictID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("conflictID"))
+	if tmp, ok := rawArgs["clientID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientID"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["conflictID"] = arg0
-	var arg1 model.Strategy
-	if tmp, ok := rawArgs["strategy"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategy"))
-		arg1, err = ec.unmarshalNStrategy2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐStrategy(ctx, tmp)
+	args["clientID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["conflictID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("conflictID"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["strategy"] = arg1
+	args["conflictID"] = arg1
+	var arg2 model.Strategy
+	if tmp, ok := rawArgs["strategy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategy"))
+		arg2, err = ec.unmarshalNStrategy2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐStrategy(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["strategy"] = arg2
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_updateRunway_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.GQRunwayInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNGQRunwayInput2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQRunwayInput(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["clientID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientID"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["clientID"] = arg0
+	var arg1 model.GQRunwayInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNGQRunwayInput2githubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQRunwayInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -542,14 +585,23 @@ func (ec *executionContext) field_Query_getConflictByRunwayID_args(ctx context.C
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["clientID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientID"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
+	args["clientID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg1
 	return args, nil
 }
 
@@ -557,14 +609,23 @@ func (ec *executionContext) field_Query_getRunwayByDesignator_args(ctx context.C
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["designator"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("designator"))
+	if tmp, ok := rawArgs["clientID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientID"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["designator"] = arg0
+	args["clientID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["designator"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("designator"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["designator"] = arg1
 	return args, nil
 }
 
@@ -572,14 +633,47 @@ func (ec *executionContext) field_Query_getRunwayByID_args(ctx context.Context, 
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["clientID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientID"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
+	args["clientID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_conflict_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clientID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientID"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clientID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["runwayID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runwayID"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["runwayID"] = arg1
 	return args, nil
 }
 
@@ -1191,7 +1285,7 @@ func (ec *executionContext) _Mutation_createRunway(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateRunway(rctx, args["input"].(model.NewRunway))
+		return ec.resolvers.Mutation().CreateRunway(rctx, args["clientID"].(string), args["input"].(model.NewRunway))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1233,7 +1327,7 @@ func (ec *executionContext) _Mutation_updateRunway(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateRunway(rctx, args["input"].(model.GQRunwayInput))
+		return ec.resolvers.Mutation().UpdateRunway(rctx, args["clientID"].(string), args["input"].(model.GQRunwayInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1272,7 +1366,7 @@ func (ec *executionContext) _Mutation_resolveConflict(ctx context.Context, field
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ResolveConflict(rctx, args["conflictID"].(string), args["strategy"].(model.Strategy))
+		return ec.resolvers.Mutation().ResolveConflict(rctx, args["clientID"].(string), args["conflictID"].(string), args["strategy"].(model.Strategy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1311,7 +1405,7 @@ func (ec *executionContext) _Query_getRunwayByDesignator(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetRunwayByDesignator(rctx, args["designator"].(string))
+		return ec.resolvers.Query().GetRunwayByDesignator(rctx, args["clientID"].(string), args["designator"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1350,7 +1444,7 @@ func (ec *executionContext) _Query_getRunwayByID(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetRunwayByID(rctx, args["id"].(string))
+		return ec.resolvers.Query().GetRunwayByID(rctx, args["clientID"].(string), args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1389,7 +1483,7 @@ func (ec *executionContext) _Query_getConflictByRunwayID(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetConflictByRunwayID(rctx, args["id"].(string))
+		return ec.resolvers.Query().GetConflictByRunwayID(rctx, args["clientID"].(string), args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1401,6 +1495,41 @@ func (ec *executionContext) _Query_getConflictByRunwayID(ctx context.Context, fi
 	res := resTmp.(*model.GQConflict)
 	fc.Result = res
 	return ec.marshalOGQConflict2ᚖgithubᚗcomᚋRickardAᚋmultiuserᚋgraphᚋmodelᚐGQConflict(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_sayHello(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().SayHello(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1490,9 +1619,16 @@ func (ec *executionContext) _Subscription_conflict(ctx context.Context, field gr
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Subscription_conflict_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().Conflict(rctx)
+		return ec.resolvers.Subscription().Conflict(rctx, args["clientID"].(string), args["runwayID"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3008,6 +3144,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getConflictByRunwayID(ctx, field)
+				return res
+			})
+		case "sayHello":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_sayHello(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "__type":

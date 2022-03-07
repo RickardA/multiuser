@@ -17,7 +17,7 @@ var _ SyncHandlerService = &SyncHandler{}
 type SyncHandlerService interface {
 	CheckVersionMismatch(localRunway domain.Runway) (bool, error)
 	GetConflictingFields(localRunway domain.Runway, remoteRunway domain.Runway) domain.Conflict
-	CreateConflict(localRunway domain.Runway, clientID string) (domain.ConflictID, error)
+	CreateConflict(localRunway domain.Runway, clientID string) (domain.Conflict, error)
 }
 
 type SyncHandler struct {
@@ -55,12 +55,12 @@ func (s SyncHandler) CheckVersionMismatch(localRunway domain.Runway) (bool, erro
 	return true, nil
 }
 
-func (s SyncHandler) CreateConflict(localRunway domain.Runway, clientID string) (domain.ConflictID, error) {
+func (s SyncHandler) CreateConflict(localRunway domain.Runway, clientID string) (domain.Conflict, error) {
 	remoteRunway, err := s.db.GetRunwayByID(localRunway.ID)
 
 	if err != nil {
 		log.WithError(err).WithField("id", localRunway.ID).Error("Could not get runway from db")
-		return domain.ConflictID(""), err
+		return domain.Conflict{}, err
 	}
 
 	log.WithField("id", localRunway.ID).Info("Getting conflicting fields")
@@ -71,11 +71,11 @@ func (s SyncHandler) CreateConflict(localRunway domain.Runway, clientID string) 
 
 	if err != nil {
 		log.WithError(err).WithField("id", localRunway.ID).Error("Could not create conflict in db")
-		return domain.ConflictID(""), err
+		return domain.Conflict{}, err
 	}
 
 	log.WithFields(log.Fields{"id": localRunway.ID, "conflictID": conflictID}).Info("Conflict created in db")
-	return conflictID, nil
+	return conflict, nil
 }
 
 func (s SyncHandler) GetConflictingFields(localRunway domain.Runway, remoteRunway domain.Runway) domain.Conflict {

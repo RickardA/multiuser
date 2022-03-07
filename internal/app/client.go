@@ -48,6 +48,6 @@ type ConflictRepository interface {
 type SyncHandler interface {
 	CheckVersionMismatch(localRunway domain.Runway) (bool, error)
 	GetConflictingFields(localRunway domain.Runway, remoteRunway domain.Runway) domain.Conflict
-	CreateConflict(localRunway domain.Runway, clientID string) (domain.ConflictID, error)
+	CreateConflict(localRunway domain.Runway, clientID string) (domain.Conflict, error)
 	ApplyChanges(remoteRunway domain.Runway, conflict domain.Conflict, strategy domain.ResolutionStrategy) (domain.Runway, error)
 }

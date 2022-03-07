@@ -3,8 +3,8 @@ package app
 import (
 	"fmt"
 
-	"github.com/RickardA/multiuser/graph/model"
 	"github.com/RickardA/multiuser/internal/pkg/domain"
+	"github.com/RickardA/multiuser/internal/pkg/domain/conv/intogql"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,17 +50,23 @@ func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway, clientID 
 	// If version is mismatched, return error
 	if versionIsMismatched {
 		log.WithFields(log.Fields{"runwayID": id, "clientID": clientID}).Info("Version mismatched, creating conflict and pushing to subscriber")
-		c.syncHandler.CreateConflict(input, clientID)
+		conflict, err := c.syncHandler.CreateConflict(input, clientID)
+
+		if err != nil {
+			return domain.Runway{}, err
+		}
 
 		// Get subscription client and send out conflict
 		subID := fmt.Sprintf("%v-%v", clientID, id)
 		sub := c.Subs[subID]
 
-		sub <- &model.GQConflict{
-			ID:               "test",
-			RunwayID:         string(id),
-			ResolutionMethod: "naaaajjs",
+		gqlConflict, err := intogql.Conflict(conflict)
+
+		if err != nil {
+			return domain.Runway{}, err
 		}
+
+		sub <- gqlConflict
 
 		log.Info("Returning in update runway")
 		return domain.Runway{}, versionMismatchedError

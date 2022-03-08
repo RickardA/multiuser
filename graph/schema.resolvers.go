@@ -13,6 +13,7 @@ import (
 	"github.com/RickardA/multiuser/internal/pkg/domain/conv/fromgql"
 	"github.com/RickardA/multiuser/internal/pkg/domain/conv/intogql"
 	uuid "github.com/nu7hatch/gouuid"
+	log "github.com/sirupsen/logrus"
 )
 
 func (r *mutationResolver) CreateRunway(ctx context.Context, clientID string, input model.NewRunway) (string, error) {
@@ -101,7 +102,8 @@ func (r *subscriptionResolver) Conflict(ctx context.Context, clientID string, ru
 
 	// Save subscription channel
 	r.Client.Subs[subID] = ch
-	fmt.Println("Conflict subscription created")
+
+	log.WithFields(log.Fields{"ClientID": clientID, "RunwayID": runwayID}).Info("Subscription recieved and handled")
 
 	return ch, nil
 }

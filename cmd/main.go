@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -35,31 +34,12 @@ func main() {
 
 	syncHandler, err := sync_handler.New(&db)
 
+	if err != nil {
+		panic("Waaaaaahhh an error")
+	}
+
 	client := app.NewClient(&db, syncHandler)
 	// Setup Client
-
-	// ticker := time.NewTicker(10 * time.Second)
-	// quit := make(chan struct{})
-	go func() {
-		fmt.Println("Go func")
-		// for {
-		// 	select {
-		// 	case <-ticker.C:
-		// 		fmt.Println("Should send notifications")
-		// 		for _, element := range client.Subs {
-		// 			fmt.Println("Sending conflict notification")
-		// 			element <- &model.GQConflict{
-		// 				ID:               "test",
-		// 				RunwayID:         "test2",
-		// 				ResolutionMethod: "naaaajjs",
-		// 			}
-		// 		}
-		// 	case <-quit:
-		// 		ticker.Stop()
-		// 		return
-		// 	}
-		// }
-	}()
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{Client: client}}))
 
@@ -68,6 +48,4 @@ func main() {
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
-
-	fmt.Println("Hej hopp")
 }

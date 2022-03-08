@@ -2,8 +2,8 @@ package mongo
 
 import (
 	"context"
-	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -46,7 +46,7 @@ func (c *Client) ListDatabaseNames() error {
 		return err
 	}
 
-	fmt.Println(databases)
+	log.WithField("Databases", databases).Info("List databases")
 
 	return nil
 }

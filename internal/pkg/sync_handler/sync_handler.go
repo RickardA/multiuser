@@ -2,7 +2,6 @@ package sync_handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
@@ -69,6 +68,8 @@ func (s SyncHandler) CreateConflict(localRunway domain.Runway, clientID string) 
 	conflict.ClientID = clientID
 	conflictID, err := s.db.CreateConflict(conflict)
 
+	conflict.ID = conflictID
+
 	if err != nil {
 		log.WithError(err).WithField("id", localRunway.ID).Error("Could not create conflict in db")
 		return domain.Conflict{}, err
@@ -113,7 +114,7 @@ func (s SyncHandler) GetConflictingFields(localRunway domain.Runway, remoteRunwa
 				diff["REMOTE"][getJSONTag(string(typeOfT.Field(i).Tag), typeOfT.Field(i).Name)] = remoteDiffs
 			}
 		default:
-			fmt.Printf("Type not recognized %v\n", f.Type().String())
+			log.WithField("Type", f.Type().String()).Error("Type not recognized")
 		}
 	}
 
@@ -126,8 +127,6 @@ func (s SyncHandler) GetConflictingFields(localRunway domain.Runway, remoteRunwa
 }
 
 func getJSONTag(tag string, key string) string {
-	fmt.Printf("Tag %v\n", tag)
-
 	if tag == "" {
 		return key
 	}
@@ -136,8 +135,6 @@ func getJSONTag(tag string, key string) string {
 	jsonTagNameRegex := regexp.MustCompile("\".*?\"")
 
 	match := jsonFullTagNameRegex.FindString(tag)
-
-	fmt.Printf("Full match %v\n", match)
 
 	if match == "" {
 		return key
@@ -149,7 +146,6 @@ func getJSONTag(tag string, key string) string {
 		return key
 	}
 
-	fmt.Printf("Return tag %v\n", tagNameMatch[0])
 	returnString := strings.ReplaceAll(tagNameMatch[0], "\"", "")
 
 	return returnString
@@ -211,7 +207,7 @@ func applyObjChanges(rwy domain.Runway, conflictObj map[string]interface{}) (dom
 					rwyMap[conflictObjKey].(map[string]interface{})[key.String()] = strct.Interface()
 				}
 			default:
-				fmt.Printf("Value is loopable but not ready to be handled\n")
+				log.Error("Value is loopable but not ready to be handled")
 			}
 			continue
 		}
@@ -220,7 +216,7 @@ func applyObjChanges(rwy domain.Runway, conflictObj map[string]interface{}) (dom
 		case reflect.Int, reflect.Float64, reflect.Bool:
 			rwyMap[conflictObjKey] = conflictObjVal
 		default:
-			fmt.Printf("Cannot set val of type %v\n", reflect.ValueOf(conflictObjVal).Kind())
+			log.WithField("Type", reflect.ValueOf(conflictObjVal).Kind()).Error("Cannot set value of type")
 		}
 
 	}

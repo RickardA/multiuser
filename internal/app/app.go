@@ -56,17 +56,9 @@ func (c *Client) UpdateRunway(id domain.RunwayID, input domain.Runway, clientID 
 			return domain.Runway{}, err
 		}
 
-		// Get subscription client and send out conflict
-		subID := fmt.Sprintf("%v-%v", clientID, id)
-		sub := c.Subs[subID]
-
-		gqlConflict, err := intogql.Conflict(conflict)
-
-		if err != nil {
+		if c.SendConflictToSubscribers(conflict, id, clientID) != nil {
 			return domain.Runway{}, err
 		}
-
-		sub <- gqlConflict
 
 		log.Info("Returning in update runway")
 		return domain.Runway{}, versionMismatchedError
@@ -138,4 +130,20 @@ func (c *Client) ResolveConflict(conflictID domain.ConflictID, resolutionStrateg
 
 	//Save modified runway and return result
 	return c.repository.UpdateRunway(conflict.RunwayID, modifiedRwy, clientID)
+}
+
+func (c *Client) SendConflictToSubscribers(conflict domain.Conflict, runwayID domain.RunwayID, clientID string) error {
+	// Get subscription client and send out conflict
+	subID := fmt.Sprintf("%v-%v", clientID, runwayID)
+	sub := c.Subs[subID]
+
+	gqlConflict, err := intogql.Conflict(conflict)
+
+	if err != nil {
+		log.WithFields(log.Fields{"RunwayID": runwayID, "ClientID": clientID}).Error("Could not send conflict to client on socket")
+	}
+
+	sub <- gqlConflict
+
+	return nil
 }

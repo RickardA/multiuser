@@ -22,6 +22,7 @@ type Client struct {
 type Interface interface {
 	Repository
 	ResolveConflict(conflictID domain.ConflictID, resolutionStrategy domain.ResolutionStrategy, clientID string) (domain.Runway, error)
+	SendConflictToSubscribers(conflict domain.Conflict, runwayID domain.RunwayID, clientID string) error
 }
 
 type Repository interface {
